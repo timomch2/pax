@@ -10,9 +10,13 @@ tmp
 !.env.example
 !.env.docker.example
 
+.secrets
 .git
-.gitignore
 .DS_Store
+
+.yarn/cache
+.yarn/install-state.gz
+.yarn/unplugged
 
 *.log
 *.sql

@@ -1,0 +1,87 @@
+name: pax
+
+x-pax-service: &pax-service
+  image: pax:${PAX_IMAGE_TAG:-local}
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - .env.pax.local
+  environment:
+    DATABASE_HOST: postgres
+    DATABASE_PORT: "5432"
+    DATABASE_NAME: pax_dev
+    DATABASE_USER: pax_app
+    DATABASE_PASSWORD_FILE: /run/secrets/pax_postgres_password
+    NEXTAUTH_SECRET_FILE: /run/secrets/pax_nextauth_secret
+  secrets:
+    - pax_postgres_password
+    - pax_nextauth_secret
+  networks:
+    - pax_internal
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  postgres:
+    image: postgres:18.4-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pax_dev
+      POSTGRES_USER: pax_app
+      POSTGRES_PASSWORD_FILE: /run/secrets/pax_postgres_password
+    secrets:
+      - pax_postgres_password
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pax_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pax_app -d pax_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - pax_internal
+
+  migrate:
+    <<: *pax-service
+    command: ["yarn", "prisma", "migrate", "deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    <<: *pax-service
+    command: ["node", "server.js"]
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+  task:
+    <<: *pax-service
+    command: ["node", "--version"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tasks
+    restart: "no"
+
+volumes:
+  pax_postgres_data:
+
+networks:
+  pax_internal:
+    driver: bridge
+
+secrets:
+  pax_postgres_password:
+    file: ./.secrets/postgres_password
+  pax_nextauth_secret:
+    file: ./.secrets/nextauth_secret

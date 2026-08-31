@@ -1,0 +1,28 @@
+name: pax
+
+x-pax-service: &pax-service
+  image: ${PAX_IMAGE:?Set PAX_IMAGE to an immutable GHCR image tag or digest}
+  env_file:
+    - ${PAX_ENV_FILE:-.env.production}
+  restart: "no"
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  migrate:
+    <<: *pax-service
+    command: ["yarn", "prisma", "migrate", "deploy"]
+
+  app:
+    <<: *pax-service
+    command: ["node", "server.js"]
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+  task:
+    <<: *pax-service
+    command: ["node", "--version"]
+    profiles:
+      - tasks

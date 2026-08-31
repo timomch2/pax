@@ -165,8 +165,8 @@ pax_platform/
 
 ### Prerequisites
 
-- Node.js 18 or later
-- Yarn (this project uses **yarn exclusively** — do not use npm or npx)
+- Node.js 22.23.2
+- Yarn 4.18.0 through Corepack (this project uses **yarn exclusively** — do not use npm or npx)
 - A PostgreSQL database
 
 ### Steps
@@ -238,6 +238,41 @@ environment. Any file that reads it must declare `export const dynamic = 'force-
 ---
 
 ## 8. Deployment
+
+PAX now has a single multi-purpose Docker image. The same immutable image runs the Next.js web process,
+Prisma migrations, TypeScript workers and Python scheduled jobs. PostgreSQL remains a separate service and
+is not baked into the application image.
+
+For the complete copy/paste procedure, including Mac ARM64 development, GitHub Container Registry,
+Ubuntu 24 deployment, backups, migrations, worker schedules, rollback and screenshots, read
+[`docs/docker/README.md`](docs/docker/README.md).
+
+### Quick local start
+
+```bash
+cp .env.docker.example .env.pax.local
+mkdir -p .secrets
+openssl rand -hex 32 > .secrets/postgres_password
+openssl rand -base64 48 > .secrets/nextauth_secret
+chmod 700 .secrets
+chmod 600 .secrets/postgres_password .secrets/nextauth_secret
+
+docker compose build app
+docker compose up -d app
+docker compose run --rm task yarn prisma db seed
+curl --fail http://127.0.0.1:3000/api/health/live
+curl --fail http://127.0.0.1:3000/api/health/ready
+```
+
+Open `http://127.0.0.1:3000`. Do not put real vendor credentials in the image or commit them to Git.
+
+### Image publishing
+
+`.github/workflows/container.yml` validates the quality target, builds `linux/amd64` and `linux/arm64`,
+publishes to GitHub Container Registry, and emits provenance and an SBOM. Pull requests build without
+publishing. Pushes to `main` and `v*` tags publish immutable `sha-*` images.
+
+The previous Abacus deployment notes remain below for historical reference.
 
 The application is hosted on the Abacus.AI platform and deployed from a saved checkpoint.
 
