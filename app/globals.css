@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light cream theme matching the public PAX site */
+    --background: 40 33% 97%;      /* #FAF8F5 */
+    --foreground: 218 32% 15%;     /* #1A2332 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 218 32% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 32% 15%;
+
+    --primary: 176 59% 30%;        /* #1F7A74 teal */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 24% 93%;       /* #F1EEE8 */
+    --secondary-foreground: 218 32% 15%;
+
+    --muted: 40 24% 93%;
+    --muted-foreground: 220 9% 40%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 218 32% 15%;
+
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 218 17% 91%;         /* #E4E7EC */
+    --input: 218 17% 88%;
+    --ring: 176 59% 30%;
+
+    --radius: 0.625rem;
+    --radius-sm: calc(0.625rem - 4px);
+    --radius-lg: calc(0.625rem + 4px);
+    --radius-full: 9999px;
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+    --spacing-3xl: 64px;
+
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 350ms;
+
+    --chart-1: 175 55% 40%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 142 60% 45%;
+    --chart-4: 262 50% 58%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .dark {
+    --background: 225 40% 7%;
+    --foreground: 0 0% 98%;
+
+    --card: 224 35% 9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 224 35% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 175 55% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 225 30% 14%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 225 25% 12%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 225 20% 16%;
+    --input: 225 20% 16%;
+    --ring: 175 55% 40%;
+
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+
+    --chart-1: 175 55% 40%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 142 60% 45%;
+    --chart-4: 262 50% 58%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background-color: transparent; }
+  ::-webkit-scrollbar-thumb { background-color: hsl(var(--border)); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--muted-foreground) / 0.5); }
+}
+
+@layer utilities {
+  /* Hide scrollbar */
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Hero background */
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% -10%, hsl(175 55% 40% / 0.15), transparent),
+      radial-gradient(ellipse 40% 40% at 80% 0%, hsl(175 50% 50% / 0.08), transparent),
+      radial-gradient(ellipse 40% 30% at 20% 10%, hsl(260 50% 50% / 0.06), transparent);
+  }
+
+  /* CTA purple gradient section */
+  .cta-gradient {
+    background: linear-gradient(135deg, #1a1545 0%, #2e2859 50%, #1a1545 100%);
+  }
+}

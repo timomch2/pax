@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+.next/
+.yarn/cache/
+.yarn/install-state.gz
+.yarn/unplugged/
+
+*.tsbuildinfo
+.DS_Store
+
+# Custom Next.js/Docker build output
+.next-docker/
+
+# Generated during standalone builds
+__abacus_error_reporter.js

@@ -1,0 +1,2296 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PRACTITIONER
+  PATIENT
+  ADMIN
+  INNOVATOR
+  INVESTOR
+  EMPLOYER
+  POLICYMAKER
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum AccessScope {
+  OWN
+  ORGANIZATION
+  ALL
+}
+
+enum PermissionEffect {
+  ALLOW
+  DENY
+}
+
+enum ClinicalRelationshipStatus {
+  ACTIVE
+  ENDED
+  REVOKED
+}
+
+enum AuthTokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  MFA_CHALLENGE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum NotificationEventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  RETRY
+  DEAD_LETTER
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENDING
+  SENT
+  DELIVERED
+  FAILED
+  DEAD_LETTER
+  SKIPPED
+}
+
+enum UploadPurpose {
+  PROFILE_IMAGE
+  GPS_EVIDENCE
+  INNOVATION_EVIDENCE
+  VAULT_DOCUMENT
+  VERIFICATION_DOCUMENT
+  VENDOR_DOCUMENT
+  SAFETY_ATTACHMENT
+  TALENT_RESUME
+}
+
+enum UploadStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  QUARANTINED
+  SCANNING
+  CLEAN
+  REJECTED
+  EXPIRED
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  MPESA
+  MANUAL
+}
+
+enum BillingInterval {
+  ONE_TIME
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  PENDING
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum PaymentIntentStatus {
+  PENDING
+  REQUIRES_ACTION
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REVERSED
+  REFUNDED
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum ReconciliationStatus {
+  MATCHED
+  MISMATCHED
+  MISSING_INTERNAL
+  MISSING_PROVIDER
+  RESOLVED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  CONSULTANCY
+  INTERNSHIP
+  VOLUNTEER
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum JobApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW
+  OFFERED
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum DataSubjectRequestType {
+  ACCESS
+  RECTIFICATION
+  ERASURE
+  OBJECTION
+  RESTRICTION
+  PORTABILITY
+  CONSENT_WITHDRAWAL
+}
+
+enum DataSubjectRequestStatus {
+  RECEIVED
+  ACKNOWLEDGED
+  IN_REVIEW
+  WAITING_USER
+  PARTIALLY_COMPLETED
+  COMPLETED
+  REJECTED
+}
+
+enum RetentionAction {
+  DELETE
+  DEIDENTIFY
+  ARCHIVE
+  REVIEW
+}
+
+enum SecurityIncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SecurityIncidentStatus {
+  OPEN
+  CONTAINED
+  INVESTIGATING
+  REMEDIATED
+  CLOSED
+}
+
+enum OperationalJobStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+// Membership tier = access level, separate from user type (role).
+// Tier 1 Basic (free), Tier 2 Professional, Tier 3 Expert.
+enum MembershipTier {
+  TIER1_BASIC
+  TIER2_PROFESSIONAL
+  TIER3_EXPERT
+}
+
+enum VerificationLevel {
+  NONE
+  EMAIL_VERIFIED
+  IDENTITY_VERIFIED
+  EXPERT_VERIFIED
+}
+
+enum VerificationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InnovationStage {
+  IDEA
+  PROTOTYPE
+  PILOT
+  SCALING
+}
+
+enum InnovationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  COMMUNITY_VALIDATED
+  INVESTOR_READY
+  FUNDED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  VERIFIED
+  RELEASED
+}
+
+enum InvestmentStatus {
+  INTERESTED
+  DUE_DILIGENCE
+  COMMITTED
+  DISBURSING
+  COMPLETED
+  DECLINED
+}
+
+enum CashFlowType {
+  INFLOW
+  OUTFLOW
+}
+
+enum DiligenceStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  FLAGGED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  BILLING
+  INVESTMENT
+  MILESTONE
+  APPOINTMENT
+}
+
+enum AppointmentType {
+  CONSULTATION
+  REVIEW
+  WARD_ROUND
+  THEATRE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+enum PayerType {
+  PATIENT
+  INSURER
+  EMPLOYER
+  SHA_NHIF
+  NGO_DONOR
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum PaymentMethod {
+  CASH
+  MPESA
+  CARD
+  BANK_TRANSFER
+  INSURANCE
+  CHEQUE
+  OTHER
+}
+
+enum InsurerCategory {
+  PUBLIC
+  PRIVATE
+  CORPORATE
+  NGO_DONOR
+  OTHER
+}
+
+enum ReminderChannel {
+  IN_APP
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+model User {
+  id                   String            @id @default(cuid())
+  name                 String
+  email                String            @unique
+  emailVerified        DateTime?
+  password             String?
+  image                String?
+  role                 UserRole          @default(PATIENT)
+  additionalRoles      String[]          @default([])
+  tier                 MembershipTier    @default(TIER1_BASIC)
+  phone                String?
+  paxId                String?           @unique
+  organization         String?
+  bio                  String?
+  linkedinUrl          String?
+  headline             String?
+  location             String?
+  physicalAddress      String?           @db.Text
+  city                 String?
+  postalCode           String?
+  country              String?
+  healthAreas          String?           @db.Text
+  credibilityScore     Int               @default(0)
+  verificationLevel    VerificationLevel @default(NONE)
+  hubMember            Boolean           @default(false)
+  hubJoinedAt          DateTime?
+  consentedAt          DateTime?
+  privacyPolicyVersion String?
+  termsVersion         String?
+  mfaEnabled           Boolean           @default(false)
+  mfaSecret            String?
+  mfaRecoveryCodes     String[]          @default([])
+  failedLoginCount     Int               @default(0)
+  lockedUntil          DateTime?
+  accountStatus        AccountStatus     @default(ACTIVE)
+  permissionVersion    Int               @default(1)
+  sessionVersion       Int               @default(1)
+  isSuperAdmin         Boolean           @default(false)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  accounts                            Account[]
+  sessions                            Session[]
+  practitionerProfile                 PractitionerProfile?
+  appointmentsAsPatient               Appointment[]               @relation("PatientAppointments")
+  appointmentsAsPractitioner          Appointment[]               @relation("PractitionerAppointments")
+  patientNotes                        PatientNote[]               @relation("PatientNotePatient")
+  authoredNotes                       PatientNote[]               @relation("PatientNoteAuthor")
+  innovations                         Innovation[]                @relation("InnovationOwner")
+  investments                         Investment[]                @relation("InvestorInvestments")
+  endorsements                        Endorsement[]               @relation("UserEndorsements")
+  notifications                       Notification[]              @relation("UserNotifications")
+  ledgerEntries                       LedgerEntry[]               @relation("UserLedger")
+  drugReports                         AdverseDrugReport[]         @relation("UserDrugReports")
+  productFeedback                     ProductFeedback[]           @relation("UserProductFeedback")
+  gpsEntries                          GpsEntry[]                  @relation("UserGpsEntries")
+  gpsEndorsementsGiven                GpsEndorsement[]            @relation("GpsEndorser")
+  challengeBriefs                     ChallengeBrief[]            @relation("UserChallengeBriefs")
+  challengeResponses                  ChallengeResponse[]         @relation("UserChallengeResponses")
+  vaultAccessRequests                 VaultAccessRequest[]        @relation("VaultRequester")
+  debatesInitiated                    Debate[]                    @relation("DebateInitiator")
+  debatesAsDevil                      Debate[]                    @relation("DebateDevilsAdvocate")
+  debateContributions                 DebateContribution[]        @relation("DebateContributionAuthor")
+  debateStances                       DebateStance[]              @relation("UserDebateStances")
+  contributionUpvotes                 ContributionUpvote[]        @relation("UserContributionUpvotes")
+  marketplaceVendor                   MarketplaceVendor?          @relation("VendorUser")
+  marketplaceBuyer                    MarketplaceBuyer?           @relation("BuyerUser")
+  marketplaceReviews                  MarketplaceReview[]         @relation("ReviewerUser")
+  recordedTransactions                MarketplaceTransaction[]    @relation("TxnRecorder")
+  briefPurchases                      BriefPurchase[]             @relation("UserBriefPurchases")
+  investorMandate                     InvestorMandate?            @relation("UserInvestorMandate")
+  hubPatients                         HubPatient[]                @relation("PractitionerHubPatients")
+  hubInvoices                         Invoice[]                   @relation("PractitionerInvoices")
+  insurersCreated                     Insurer[]                   @relation("InsurerCreator")
+  remindersSent                       PaymentReminder[]           @relation("ReminderSender")
+  verificationRequests                VerificationRequest[]       @relation("UserVerificationRequests")
+  consentRecords                      ConsentRecord[]             @relation("UserConsentRecords")
+  auditLogs                           AuditLog[]                  @relation("UserAuditLogs")
+  accessRoleAssignments               UserAccessRole[]            @relation("UserAccessRoles")
+  directPermissions                   UserPermission[]            @relation("UserDirectPermissions")
+  clinicalRelationshipsAsPractitioner ClinicalRelationship[]      @relation("ClinicalPractitioner")
+  clinicalRelationshipsAsPatient      ClinicalRelationship[]      @relation("ClinicalPatient")
+  authTokens                          AuthToken[]                 @relation("UserAuthTokens")
+  notificationEvents                  NotificationEvent[]         @relation("UserNotificationEvents")
+  notificationPreference              NotificationPreference?
+  uploadAssets                        UploadAsset[]               @relation("UserUploadAssets")
+  billingSubscriptions                Subscription[]              @relation("UserSubscriptions")
+  billingEntitlements                 Entitlement[]               @relation("UserEntitlements")
+  paymentIntents                      PaymentIntent[]             @relation("UserPaymentIntents")
+  providerCustomers                   ProviderCustomer[]          @relation("UserProviderCustomers")
+  billingReceipts                     Receipt[]                   @relation("UserReceipts")
+  jobsOwned                           Job[]                       @relation("JobEmployer")
+  jobApplications                     JobApplication[]            @relation("JobApplicant")
+  applicationStatusChanges            JobApplicationStatusEvent[] @relation("ApplicationStatusActor")
+  dataSubjectRequests                 DataSubjectRequest[]        @relation("DataSubjectRequester")
+  assignedDataSubjectRequests         DataSubjectRequest[]        @relation("DataSubjectAssignee")
+  dataSubjectRequestEvents            DataSubjectRequestEvent[]   @relation("DataSubjectEventActor")
+  securityIncidentsReported           SecurityIncident[]          @relation("SecurityIncidentReporter")
+  securityIncidentsAssigned           SecurityIncident[]          @relation("SecurityIncidentAssignee")
+  ndaAcceptances                      NdaAcceptance[]             @relation("NdaAcceptor")
+
+  @@index([role])
+  @@index([tier])
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PractitionerProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  medicalRegNumber String
+  specialty        String
+  consultationRate Int      @default(2500)
+  hospital         String?
+  bio              String?
+  clinicId         String?
+  affiliations     String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Innovation {
+  id               String           @id @default(cuid())
+  ownerId          String
+  owner            User             @relation("InnovationOwner", fields: [ownerId], references: [id])
+  title            String
+  tagline          String?
+  sector           String
+  summary          String           @db.Text
+  problem          String?          @db.Text
+  solution         String?          @db.Text
+  stage            InnovationStage  @default(IDEA)
+  status           InnovationStatus @default(DRAFT)
+  fundingGoal      Int              @default(0)
+  fundingRaised    Int              @default(0)
+  validationScore  Int              @default(0)
+  credibilityScore Int              @default(0)
+  verified         Boolean          @default(false)
+  location         String?
+  imageUrl         String?
+  team             String?          @db.Text
+  evidence         String?          @db.Text
+  fundingUse       String?          @db.Text
+  ipHash           String?
+  ipTimestampedAt  DateTime?
+  submittedAt      DateTime?
+
+  // IP Protection & Self-Assessment (Innovation Hub IP Journey)
+  ipProtectionLevel       String? // PRE_PATENT, PROVISIONAL_FILED, PATENT_GRANTED, TRADE_SECRET, OPEN_SOURCE
+  patentRegNumber         String?
+  patentJurisdiction      String?
+  openSourceLicense       String?
+  priorDisclosure         Boolean   @default(false)
+  priorDisclosureDate     DateTime?
+  thirdPartyDeps          Boolean   @default(false)
+  thirdPartyDepsNote      String?   @db.Text
+  revenueModel            String? // LICENSING, SAAS, ROYALTY, MANUFACTURING, OTHER
+  impactStatement         String?   @db.Text // Greater Good / public health value
+  selfAssessmentData      String?   @db.Text // JSON blob of full checklist answers
+  selfAssessmentCompleted Boolean   @default(false)
+  declarationSignedAt     DateTime?
+
+  // Tier 2 Vault Content (protected behind NDA)
+  technicalBlueprint   String? @db.Text // Detailed technical specs, schematics
+  financialModelDetail String? @db.Text // Detailed financial projections, cap tables
+  patentDocumentation  String? @db.Text // Unfiled drafts, provisional claims
+  clinicalData         String? @db.Text // Clinical/field validation data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  milestones          Milestone[]
+  investments         Investment[]
+  diligenceItems      DiligenceItem[]
+  cashFlows           CashFlowEntry[]
+  endorsements        Endorsement[]
+  vaultAccessRequests VaultAccessRequest[]
+  vaultDocuments      VaultDocument[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([sector])
+}
+
+model Milestone {
+  id             String          @id @default(cuid())
+  innovationId   String
+  innovation     Innovation      @relation(fields: [innovationId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?         @db.Text
+  targetAmount   Int             @default(0)
+  releasedAmount Int             @default(0)
+  dueDate        DateTime?
+  status         MilestoneStatus @default(PENDING)
+  progress       Int             @default(0)
+  orderIndex     Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([innovationId])
+}
+
+model Investment {
+  id           String           @id @default(cuid())
+  investorId   String
+  investor     User             @relation("InvestorInvestments", fields: [investorId], references: [id])
+  innovationId String
+  innovation   Innovation       @relation(fields: [innovationId], references: [id])
+  amount       Int              @default(0)
+  status       InvestmentStatus @default(INTERESTED)
+  committedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([investorId])
+  @@index([innovationId])
+}
+
+model DiligenceItem {
+  id           String          @id @default(cuid())
+  innovationId String
+  innovation   Innovation      @relation(fields: [innovationId], references: [id], onDelete: Cascade)
+  name         String
+  category     String?
+  status       DiligenceStatus @default(PENDING)
+  notes        String?         @db.Text
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([innovationId])
+}
+
+model CashFlowEntry {
+  id           String       @id @default(cuid())
+  innovationId String
+  innovation   Innovation   @relation(fields: [innovationId], references: [id], onDelete: Cascade)
+  type         CashFlowType
+  category     String
+  amount       Int
+  description  String?
+  date         DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+
+  @@index([innovationId])
+}
+
+model Endorsement {
+  id           String     @id @default(cuid())
+  innovationId String
+  innovation   Innovation @relation(fields: [innovationId], references: [id], onDelete: Cascade)
+  endorserId   String
+  endorser     User       @relation("UserEndorsements", fields: [endorserId], references: [id])
+  comment      String?
+  createdAt    DateTime   @default(now())
+
+  @@index([innovationId])
+}
+
+enum GpsEntryType {
+  FORMAL_ROLE
+  COMMUNITY_INITIATIVE
+  RESEARCH_POLICY
+  VOLUNTEER
+  TRADITIONAL_KNOWLEDGE
+}
+
+enum GpsEndorserType {
+  SUPERVISOR
+  COMMUNITY_ORG
+  BENEFICIARY
+  EXPERT
+  PEER
+  ACADEMIC
+}
+
+model GpsEntry {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation("UserGpsEntries", fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  organization   String?
+  entryType      GpsEntryType @default(FORMAL_ROLE)
+  healthArea     String?
+  geography      String?
+  periodStart    String?
+  periodEnd      String?
+  gap            String       @db.Text
+  rootCause      String?      @db.Text
+  solution       String       @db.Text
+  outcome        String       @db.Text
+  lessonsLearned String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  endorsements       GpsEndorsement[]
+  evidence           GpsEvidence[]
+  challengeResponses ChallengeResponse[]
+
+  @@index([userId])
+}
+
+enum ChallengeStatus {
+  OPEN
+  CLOSED
+}
+
+model ChallengeBrief {
+  id           String          @id @default(cuid())
+  authorId     String
+  author       User            @relation("UserChallengeBriefs", fields: [authorId], references: [id], onDelete: Cascade)
+  title        String
+  organization String?
+  healthArea   String?
+  geography    String?
+  problem      String          @db.Text
+  lookingFor   String          @db.Text
+  deadline     String?
+  status       ChallengeStatus @default(OPEN)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  responses ChallengeResponse[]
+
+  @@index([authorId])
+  @@index([status])
+}
+
+model ChallengeResponse {
+  id          String         @id @default(cuid())
+  briefId     String
+  brief       ChallengeBrief @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  responderId String
+  responder   User           @relation("UserChallengeResponses", fields: [responderId], references: [id], onDelete: Cascade)
+  gpsEntryId  String?
+  gpsEntry    GpsEntry?      @relation(fields: [gpsEntryId], references: [id], onDelete: SetNull)
+  message     String         @db.Text
+  createdAt   DateTime       @default(now())
+
+  @@unique([briefId, responderId])
+  @@index([briefId])
+  @@index([responderId])
+}
+
+model GpsEvidence {
+  id               String       @id @default(cuid())
+  gpsEntryId       String
+  gpsEntry         GpsEntry     @relation(fields: [gpsEntryId], references: [id], onDelete: Cascade)
+  fileName         String
+  cloudStoragePath String
+  uploadAssetId    String?      @unique
+  uploadAsset      UploadAsset? @relation("GpsEvidenceUpload", fields: [uploadAssetId], references: [id], onDelete: Restrict)
+  contentType      String
+  isPublic         Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+
+  @@index([gpsEntryId])
+}
+
+model GpsEndorsement {
+  id           String          @id @default(cuid())
+  gpsEntryId   String
+  gpsEntry     GpsEntry        @relation(fields: [gpsEntryId], references: [id], onDelete: Cascade)
+  endorserId   String
+  endorser     User            @relation("GpsEndorser", fields: [endorserId], references: [id])
+  endorserType GpsEndorserType
+  comment      String?         @db.Text
+  createdAt    DateTime        @default(now())
+
+  @@unique([gpsEntryId, endorserId])
+  @@index([gpsEntryId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation("UserNotifications", fields: [userId], references: [id])
+  title     String
+  message   String           @db.Text
+  type      NotificationType @default(INFO)
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([read])
+}
+
+model LedgerEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserLedger", fields: [userId], references: [id])
+  date        DateTime @default(now())
+  description String
+  debit       Int      @default(0)
+  credit      Int      @default(0)
+  balance     Int      @default(0)
+  category    String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  practitionerId String
+  practitioner   User              @relation("PractitionerAppointments", fields: [practitionerId], references: [id])
+  patientId      String
+  patient        User              @relation("PatientAppointments", fields: [patientId], references: [id])
+  dateTime       DateTime
+  type           AppointmentType   @default(CONSULTATION)
+  status         AppointmentStatus @default(SCHEDULED)
+  location       String?
+  fee            Int               @default(0)
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  billingRecord BillingRecord?
+
+  @@index([practitionerId])
+  @@index([patientId])
+  @@index([dateTime])
+  @@index([status])
+}
+
+model BillingRecord {
+  id            String        @id @default(cuid())
+  appointmentId String        @unique
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id])
+  amount        Int
+  paymentStatus PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([paymentStatus])
+}
+
+enum SideEffectSeverity {
+  MILD
+  MODERATE
+  SEVERE
+  LIFE_THREATENING
+}
+
+model AdverseDrugReport {
+  id               String             @id @default(cuid())
+  reporterId       String?
+  // Retention: safety reports are NEVER deleted. If the reporting member's account
+  // is removed the report survives with the reporter link cleared.
+  reporter         User?              @relation("UserDrugReports", fields: [reporterId], references: [id], onDelete: SetNull)
+  drugName         String
+  doseTaken        String
+  sideEffects      String // type of side effects experienced
+  severity         SideEffectSeverity @default(MODERATE)
+  patientAge       Int
+  patientGender    String
+  patientWeight    Float? // required for children under 12
+  isPregnant       Boolean            @default(false)
+  otherMedication  String? // other medication currently in use
+  onsetDaysAgo     Int? // how many days after starting the drug the reaction began
+  durationDays     Int? // how many days the reaction lasted
+  treatmentGiven   Boolean? // was any treatment given for the reaction
+  treatmentDetails String? // what treatment was given
+  province         String?
+  country          String             @default("Kenya")
+  description      String? // additional details
+  archivedAt       DateTime? // stamped once the record passes the 5-year retention window; never deleted
+  archiveRef       String? // cloud-storage key of the archive snapshot this record was written into
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([drugName])
+  @@index([createdAt])
+  @@index([archivedAt])
+}
+
+model ProductFeedback {
+  id             String    @id @default(cuid())
+  reviewerId     String?
+  // Retention: product feedback is NEVER deleted. If the reviewer's account is
+  // removed the feedback survives with the reviewer link cleared.
+  reviewer       User?     @relation("UserProductFeedback", fields: [reviewerId], references: [id], onDelete: SetNull)
+  productName    String
+  productSize    String? // size of product
+  isOnPlatform   Boolean   @default(false)
+  innovationId   String? // links to marketplace product if on-platform
+  rating         Int // 1-5 stars
+  comment        String?
+  isExpertReview Boolean   @default(false) // true if reviewer has PRACTITIONER role
+  hasEvidence    Boolean   @default(false) // expert attached supporting evidence
+  evidenceUrl    String? // link / reference to supporting evidence
+  feedbackTier   String    @default("STAR") // STAR | STAR_COMMENT | EXPERT_COMMENT | EXPERT_EVIDENCE
+  expertWeight   Float     @default(1.0) // computed tier weight: 1 / 1.5 / 3 / 5
+  reporterEmail  String? // optional contact for acknowledgement
+  province       String?
+  country        String    @default("Kenya")
+  archivedAt     DateTime? // stamped once the record passes the 5-year retention window; never deleted
+  archiveRef     String? // cloud-storage key of the archive snapshot this record was written into
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([productName])
+  @@index([innovationId])
+  @@index([rating])
+  @@index([createdAt])
+  @@index([archivedAt])
+}
+
+model PatientNote {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   User     @relation("PatientNotePatient", fields: [patientId], references: [id])
+  authorId  String
+  author    User     @relation("PatientNoteAuthor", fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+// ── Practitioners Hub: finance-first billing engine ──
+
+// A patient record owned by a practitioner (NOT a PAX platform user).
+model HubPatient {
+  id             String   @id @default(cuid())
+  practitionerId String
+  practitioner   User     @relation("PractitionerHubPatients", fields: [practitionerId], references: [id], onDelete: Cascade)
+  name           String
+  phone          String?
+  email          String?
+  patientCode    String?  @unique // system-generated permanent ID, e.g. PAX-P-4K7Q2M
+  nationalId     String?
+  patientRef     String? // practitioner's own reference / file number
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoices Invoice[] @relation("HubPatientInvoices")
+
+  @@index([practitionerId])
+  @@index([name])
+}
+
+// Directory of named payer entities (insurers, SHA, corporates, NGOs).
+// isSystem=true entries are shared defaults; others are practitioner-added.
+model Insurer {
+  id           String          @id @default(cuid())
+  name         String
+  shortName    String?
+  category     InsurerCategory @default(PRIVATE)
+  contactPhone String?
+  contactEmail String?
+  isSystem     Boolean         @default(false)
+  createdById  String?
+  createdBy    User?           @relation("InsurerCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  payerLines InvoicePayer[] @relation("InsurerPayerLines")
+
+  @@index([createdById])
+  @@index([isSystem])
+}
+
+// A bill raised by a practitioner. Total can be SPLIT across multiple payers.
+model Invoice {
+  id             String        @id @default(cuid())
+  practitionerId String
+  practitioner   User          @relation("PractitionerInvoices", fields: [practitionerId], references: [id], onDelete: Cascade)
+  hubPatientId   String?
+  hubPatient     HubPatient?   @relation("HubPatientInvoices", fields: [hubPatientId], references: [id], onDelete: SetNull)
+  invoiceNumber  String        @unique
+  patientName    String // denormalized for records without a linked HubPatient
+  serviceDesc    String        @db.Text
+  serviceType    String?
+  serviceDate    DateTime      @default(now())
+  totalAmount    Int           @default(0)
+  status         InvoiceStatus @default(UNPAID)
+  notes          String?       @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  payers InvoicePayer[] @relation("InvoicePayers")
+
+  @@index([practitionerId])
+  @@index([status])
+  @@index([serviceDate])
+}
+
+// A single payer line on an invoice (the split).
+model InvoicePayer {
+  id           String         @id @default(cuid())
+  invoiceId    String
+  invoice      Invoice        @relation("InvoicePayers", fields: [invoiceId], references: [id], onDelete: Cascade)
+  payerType    PayerType      @default(PATIENT)
+  payerName    String
+  insurerId    String?
+  insurer      Insurer?       @relation("InsurerPayerLines", fields: [insurerId], references: [id], onDelete: SetNull)
+  amount       Int            @default(0)
+  amountPaid   Int            @default(0)
+  method       PaymentMethod?
+  status       PaymentStatus  @default(PENDING)
+  dueDate      DateTime?
+  paidAt       DateTime?
+  contactPhone String?
+  contactEmail String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  reminders PaymentReminder[] @relation("PayerReminders")
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// A logged payment reminder sent to a debtor (payer line).
+model PaymentReminder {
+  id             String          @id @default(cuid())
+  invoicePayerId String
+  invoicePayer   InvoicePayer    @relation("PayerReminders", fields: [invoicePayerId], references: [id], onDelete: Cascade)
+  sentById       String
+  sentBy         User            @relation("ReminderSender", fields: [sentById], references: [id], onDelete: Cascade)
+  channel        ReminderChannel @default(IN_APP)
+  message        String          @db.Text
+  isAutomated    Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+
+  @@index([invoicePayerId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// KNOWLEDGE EXCHANGE — Debate Hub (qualitative evidence engine)
+// ---------------------------------------------------------------------------
+
+enum DebateType {
+  POLICY_PRACTICE // Type A — Policy vs Practice case studies
+  RESEARCH_FEASIBILITY // Type B — Research feasibility & implementation audits
+  INNOVATION_PILOT // Type C — Innovation pilot reviews & market-gap discovery
+}
+
+enum DebateStatus {
+  PROPOSED
+  UNDER_REVIEW
+  OPEN
+  CLOSING_SOON
+  CLOSED
+  IN_SYNTHESIS
+  PUBLISHED
+}
+
+// 3-tier feedback engine: Quick Reaction (DebateStance) escalates to these two written kinds.
+enum ContributionKind {
+  SHORT_REVIEW // brief contextual commentary / regional nuance (Tier 1/2)
+  EXPERT_OPINION // in-depth Tier 3 technical critique / peer review
+}
+
+// Quick Reaction tags — a member's rapid position on a debate.
+enum StanceType {
+  AGREE
+  DISAGREE
+  PARTLY_AGREE
+  INSUFFICIENT_EVIDENCE
+  RELEVANT_MY_SETTING
+  NOT_FEASIBLE_MY_SETTING
+}
+
+// AI flags; a human decides. AI never sets REMOVED.
+enum ModerationStatus {
+  OK // visible, no concern
+  FLAGGED // AI raised a concern — still visible, awaiting human review
+  REMOVED // hidden — only ever set by a human moderator
+}
+
+model Debate {
+  id          String       @id @default(cuid())
+  initiatorId String
+  initiator   User         @relation("DebateInitiator", fields: [initiatorId], references: [id])
+  type        DebateType
+  status      DebateStatus @default(OPEN)
+
+  title          String
+  motion         String  @db.Text // central question / motion
+  healthDomain   String? // Health Security / UHC / Supply Chain / Maternal Health / etc
+  geographyFocus String? // Global / Regional / Country-specific label
+
+  // Anchor (optional — a debate can start from a question, not a 2-pager)
+  anchorType             String? // policy | paper | innovation | field-challenge
+  anchorReference        String? @db.Text // link or citation
+  standardRecommendation String? @db.Text // quoted official objective / recommendation
+
+  background       String? @db.Text // short framing note
+  problemStatement String  @db.Text // ground-truth gap between requirement and reality
+
+  // Qualitative prompts shown to the community (editable per debate)
+  promptGroundTruth String? @db.Text
+  promptAdaptation  String? @db.Text
+  promptFeasibility String? @db.Text
+
+  devilsAdvocateId String?
+  devilsAdvocate   User?   @relation("DebateDevilsAdvocate", fields: [devilsAdvocateId], references: [id])
+
+  closesAt DateTime?
+  featured Boolean   @default(false)
+
+  // Cross-links to PAX ecosystem (optional)
+  relatedInnovationId String?
+  relatedListingId    String?
+
+  // Synthesis (Phase 2 wiring — AI drafts, human approves)
+  consensusAbstract    String?   @db.Text // free teaser shown to all members
+  consensusBrief       String?   @db.Text
+  consensusPublishedAt DateTime?
+  feasibilityConsensus Float? // rollup of feasibility scores (1-5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contributions  DebateContribution[]
+  stances        DebateStance[]
+  briefPurchases BriefPurchase[]      @relation("DebateBriefPurchases")
+
+  @@index([type])
+  @@index([status])
+  @@index([initiatorId])
+  @@index([featured])
+}
+
+// One-time purchase unlocking a detailed consensus brief download.
+// First-party PAX revenue (not brokered) — abstract is free, full brief is paid.
+model BriefPurchase {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation("UserBriefPurchases", fields: [userId], references: [id], onDelete: Cascade)
+  debateId String
+  debate   Debate @relation("DebateBriefPurchases", fields: [debateId], references: [id], onDelete: Cascade)
+
+  amountCents       Int            @default(99) // price at purchase time, in cents
+  currency          String         @default("USD")
+  status            String         @default("PENDING") // PENDING | PAID | FAILED
+  provider          String         @default("paystack")
+  providerReference String? // Paystack transaction reference
+  paymentIntentId   String?        @unique
+  paymentIntent     PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: SetNull)
+  paidAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, debateId])
+  @@index([debateId])
+  @@index([status])
+  @@index([providerReference])
+}
+
+// First-party billing only. Marketplace vendor/buyer transactions never use these models.
+model Plan {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  description   String?        @db.Text
+  active        Boolean        @default(false)
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  prices        PlanPrice[]
+  subscriptions Subscription[]
+
+  @@index([active])
+}
+
+model PlanPrice {
+  id               String           @id @default(cuid())
+  planId           String
+  plan             Plan             @relation(fields: [planId], references: [id], onDelete: Restrict)
+  currency         String           @db.VarChar(3)
+  amountMinor      Int
+  interval         BillingInterval
+  trialDays        Int              @default(0)
+  active           Boolean          @default(false)
+  provider         PaymentProvider?
+  providerPriceRef String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  subscriptions    Subscription[]
+  paymentIntents   PaymentIntent[]
+
+  @@unique([planId, currency, interval])
+  @@index([active, currency])
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String
+  user               User               @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Restrict)
+  planId             String
+  plan               Plan               @relation(fields: [planId], references: [id], onDelete: Restrict)
+  planPriceId        String
+  planPrice          PlanPrice          @relation(fields: [planPriceId], references: [id], onDelete: Restrict)
+  status             SubscriptionStatus @default(PENDING)
+  provider           PaymentProvider?
+  providerReference  String?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  trialEndsAt        DateTime?
+  cancelAtPeriodEnd  Boolean            @default(false)
+  cancelledAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  entitlements       Entitlement[]
+  paymentIntents     PaymentIntent[]
+
+  @@index([userId, status])
+  @@index([provider, providerReference])
+}
+
+model Entitlement {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation("UserEntitlements", fields: [userId], references: [id], onDelete: Restrict)
+  subscriptionId String?
+  subscription   Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  key            String
+  resourceType   String?
+  resourceId     String?
+  status         EntitlementStatus @default(ACTIVE)
+  startsAt       DateTime          @default(now())
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([userId, key, resourceType, resourceId])
+  @@index([userId, status, expiresAt])
+}
+
+model ProviderCustomer {
+  id                 String          @id @default(cuid())
+  userId             String
+  user               User            @relation("UserProviderCustomers", fields: [userId], references: [id], onDelete: Restrict)
+  provider           PaymentProvider
+  providerCustomerId String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@unique([provider, providerCustomerId])
+  @@unique([userId, provider])
+}
+
+model PaymentIntent {
+  id                String               @id @default(cuid())
+  userId            String
+  user              User                 @relation("UserPaymentIntents", fields: [userId], references: [id], onDelete: Restrict)
+  planPriceId       String?
+  planPrice         PlanPrice?           @relation(fields: [planPriceId], references: [id], onDelete: Restrict)
+  subscriptionId    String?
+  subscription      Subscription?        @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  kind              String
+  resourceType      String?
+  resourceId        String?
+  provider          PaymentProvider
+  providerReference String?
+  idempotencyKey    String               @unique
+  amountMinor       Int
+  currency          String               @db.VarChar(3)
+  customerEmail     String
+  status            PaymentIntentStatus  @default(PENDING)
+  expiresAt         DateTime?
+  failureCode       String?
+  failureMessage    String?
+  metadata          Json?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  transactions      PaymentTransaction[]
+  refunds           Refund[]
+  receipts          Receipt[]
+  briefPurchase     BriefPurchase?
+
+  @@unique([provider, providerReference])
+  @@index([userId, status])
+  @@index([resourceType, resourceId])
+}
+
+model PaymentTransaction {
+  id                    String                   @id @default(cuid())
+  paymentIntentId       String
+  paymentIntent         PaymentIntent            @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  provider              PaymentProvider
+  providerTransactionId String
+  status                PaymentTransactionStatus
+  amountMinor           Int
+  currency              String                   @db.VarChar(3)
+  providerPaidAt        DateTime?
+  rawReference          String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  refunds               Refund[]
+  receipt               Receipt?
+
+  @@unique([provider, providerTransactionId])
+  @@index([paymentIntentId, status])
+}
+
+model WebhookEvent {
+  id              String             @id @default(cuid())
+  provider        PaymentProvider
+  providerEventId String
+  eventType       String
+  status          WebhookEventStatus @default(RECEIVED)
+  payload         Json
+  receivedAt      DateTime           @default(now())
+  processedAt     DateTime?
+  attemptCount    Int                @default(0)
+  lastError       String?
+
+  @@unique([provider, providerEventId])
+  @@index([status, receivedAt])
+}
+
+model Refund {
+  id                   String              @id @default(cuid())
+  paymentIntentId      String
+  paymentIntent        PaymentIntent       @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  paymentTransactionId String?
+  paymentTransaction   PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id], onDelete: Restrict)
+  provider             PaymentProvider
+  providerRefundId     String?             @unique
+  idempotencyKey       String              @unique
+  amountMinor          Int
+  currency             String              @db.VarChar(3)
+  reason               String?             @db.Text
+  providerStatus       String?
+  status               RefundStatus        @default(PENDING)
+  completedAt          DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([paymentIntentId, status])
+}
+
+model Receipt {
+  id                   String              @id @default(cuid())
+  receiptNumber        String              @unique
+  userId               String
+  user                 User                @relation("UserReceipts", fields: [userId], references: [id], onDelete: Restrict)
+  paymentIntentId      String
+  paymentIntent        PaymentIntent       @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  paymentTransactionId String?             @unique
+  paymentTransaction   PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id], onDelete: Restrict)
+  amountMinor          Int
+  currency             String              @db.VarChar(3)
+  issuedAt             DateTime            @default(now())
+
+  @@index([userId, issuedAt])
+}
+
+model ReconciliationRecord {
+  id                    String               @id @default(cuid())
+  provider              PaymentProvider
+  providerTransactionId String
+  paymentIntentId       String?
+  expectedAmountMinor   Int?
+  providerAmountMinor   Int?
+  currency              String?              @db.VarChar(3)
+  status                ReconciliationStatus
+  details               Json?
+  reconciledAt          DateTime             @default(now())
+  resolvedAt            DateTime?
+
+  @@unique([provider, providerTransactionId])
+  @@index([status, reconciledAt])
+}
+
+model Job {
+  id               String           @id @default(cuid())
+  employerId       String
+  employer         User             @relation("JobEmployer", fields: [employerId], references: [id], onDelete: Restrict)
+  title            String
+  organization     String
+  summary          String           @db.Text
+  responsibilities String           @db.Text
+  requirements     String           @db.Text
+  healthAreas      String[]         @default([])
+  employmentType   EmploymentType
+  workMode         WorkMode
+  location         String?
+  country          String?
+  salaryMinMinor   Int?
+  salaryMaxMinor   Int?
+  salaryCurrency   String?          @db.VarChar(3)
+  status           JobStatus        @default(DRAFT)
+  publishedAt      DateTime?
+  closesAt         DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  applications     JobApplication[]
+
+  @@index([employerId, status])
+  @@index([status, publishedAt])
+  @@index([employmentType, workMode])
+}
+
+model JobApplication {
+  id            String                      @id @default(cuid())
+  jobId         String
+  job           Job                         @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  applicantId   String
+  applicant     User                        @relation("JobApplicant", fields: [applicantId], references: [id], onDelete: Restrict)
+  coverLetter   String                      @db.Text
+  resumeAssetId String?
+  resumeAsset   UploadAsset?                @relation(fields: [resumeAssetId], references: [id], onDelete: Restrict)
+  status        JobApplicationStatus        @default(SUBMITTED)
+  submittedAt   DateTime                    @default(now())
+  withdrawnAt   DateTime?
+  updatedAt     DateTime                    @updatedAt
+  statusEvents  JobApplicationStatusEvent[]
+
+  @@unique([jobId, applicantId])
+  @@index([applicantId, status])
+  @@index([jobId, status])
+}
+
+model JobApplicationStatusEvent {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   JobApplication        @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  fromStatus    JobApplicationStatus?
+  toStatus      JobApplicationStatus
+  actorId       String
+  actor         User                  @relation("ApplicationStatusActor", fields: [actorId], references: [id], onDelete: Restrict)
+  note          String?               @db.Text
+  createdAt     DateTime              @default(now())
+
+  @@index([applicationId, createdAt])
+}
+
+model DataSubjectRequest {
+  id                   String                    @id @default(cuid())
+  requesterId          String
+  requester            User                      @relation("DataSubjectRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  type                 DataSubjectRequestType
+  status               DataSubjectRequestStatus  @default(RECEIVED)
+  scope                String?
+  reason               String?                   @db.Text
+  assignedToId         String?
+  assignedTo           User?                     @relation("DataSubjectAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  acknowledgementDueAt DateTime
+  resolutionDueAt      DateTime
+  acknowledgedAt       DateTime?
+  completedAt          DateTime?
+  resolution           String?                   @db.Text
+  retentionExceptions  Json?
+  executionConfirmedAt DateTime?
+  executedAt           DateTime?
+  executionSummary     Json?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  events               DataSubjectRequestEvent[]
+
+  @@index([requesterId, createdAt])
+  @@index([status, resolutionDueAt])
+  @@index([assignedToId, status])
+}
+
+model DataSubjectRequestEvent {
+  id         String                    @id @default(cuid())
+  requestId  String
+  request    DataSubjectRequest        @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  fromStatus DataSubjectRequestStatus?
+  toStatus   DataSubjectRequestStatus
+  actorId    String
+  actor      User                      @relation("DataSubjectEventActor", fields: [actorId], references: [id], onDelete: Restrict)
+  note       String?                   @db.Text
+  createdAt  DateTime                  @default(now())
+
+  @@index([requestId, createdAt])
+}
+
+model DataRetentionPolicy {
+  id            String          @id @default(cuid())
+  dataCategory  String          @unique
+  description   String          @db.Text
+  legalBasis    String          @db.Text
+  retentionDays Int
+  action        RetentionAction
+  active        Boolean         @default(false)
+  approvedBy    String?
+  approvedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([active])
+}
+
+model SecurityIncident {
+  id                   String                   @id @default(cuid())
+  reference            String                   @unique
+  title                String
+  description          String                   @db.Text
+  severity             SecurityIncidentSeverity
+  status               SecurityIncidentStatus   @default(OPEN)
+  reporterId           String
+  reporter             User                     @relation("SecurityIncidentReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  assignedToId         String?
+  assignedTo           User?                    @relation("SecurityIncidentAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  personalDataInvolved Boolean                  @default(false)
+  affectedSubjects     Int?
+  detectedAt           DateTime
+  containedAt          DateTime?
+  authorityNotifiedAt  DateTime?
+  subjectsNotifiedAt   DateTime?
+  remediation          String?                  @db.Text
+  closedAt             DateTime?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+
+  @@index([status, severity])
+  @@index([assignedToId, status])
+}
+
+model OperationalJobRun {
+  id          String               @id @default(cuid())
+  jobKey      String
+  runKey      String               @unique
+  status      OperationalJobStatus @default(RUNNING)
+  startedAt   DateTime             @default(now())
+  heartbeatAt DateTime             @default(now())
+  finishedAt  DateTime?
+  processed   Int                  @default(0)
+  failed      Int                  @default(0)
+  details     Json?
+  error       String?              @db.Text
+
+  @@index([jobKey, startedAt])
+  @@index([status, heartbeatAt])
+}
+
+model InvoiceSequence {
+  id             String   @id @default(cuid())
+  practitionerId String
+  year           Int
+  nextValue      Int      @default(1)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([practitionerId, year])
+}
+
+// Investor mandate — profiling for the Neural Matchmaking Pipeline.
+// One per investor; drives AI compatibility scoring against innovations.
+model InvestorMandate {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("UserInvestorMandate", fields: [userId], references: [id], onDelete: Cascade)
+
+  geographies   String[] @default([]) // e.g. "East Africa", "Sub-Saharan Africa"
+  sectors       String[] @default([]) // health category pillars (from INNOVATION_SECTORS)
+  stages        String[] @default([]) // InnovationStage values: IDEA|PROTOTYPE|PILOT|SCALING
+  ticketMinUsd  Int      @default(0) // min ticket, USD
+  ticketMaxUsd  Int      @default(0) // max ticket, USD (0 = no cap)
+  notes         String?  @db.Text // free-text thesis / additional preferences
+  notifyOnMatch Boolean  @default(true) // send deal alerts on new high-scoring matches
+  active        Boolean  @default(true)
+
+  // Ethical Investment Manifesto gate — must be accepted before accessing deal room
+  ethicalManifestoAcceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}
+
+model DebateContribution {
+  id       String @id @default(cuid())
+  debateId String
+  debate   Debate @relation(fields: [debateId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation("DebateContributionAuthor", fields: [authorId], references: [id])
+
+  kind                  ContributionKind @default(SHORT_REVIEW)
+  body                  String           @db.Text
+  dimension             String? // one of the 6 evaluation dimensions
+  feasibilityScore      Int? // 1-5 practicality rating
+  implementationSetting String? // where / context this is drawn from
+  evidenceUrl           String? // link to supporting data
+
+  isDevilsAdvocate Boolean @default(false)
+  isExpert         Boolean @default(false) // tier snapshot for the Expert badge
+  aiGenerated      Boolean @default(false) // AI-drafted (e.g. devil's advocate)
+
+  moderationStatus       ModerationStatus @default(OK)
+  moderationReason       String?          @db.Text // AI's flag reason for the human queue
+  moderationReviewedById String?
+  moderationReviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  upvotes ContributionUpvote[]
+
+  @@index([debateId])
+  @@index([authorId])
+  @@index([moderationStatus])
+}
+
+// Quick Reaction — a member's rapid stance on a debate (one per debate).
+model DebateStance {
+  id        String     @id @default(cuid())
+  debateId  String
+  debate    Debate     @relation(fields: [debateId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation("UserDebateStances", fields: [userId], references: [id], onDelete: Cascade)
+  reaction  StanceType
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([debateId, userId])
+  @@index([debateId])
+}
+
+model ContributionUpvote {
+  id             String             @id @default(cuid())
+  contributionId String
+  contribution   DebateContribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User               @relation("UserContributionUpvotes", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now())
+
+  @@unique([contributionId, userId])
+  @@index([contributionId])
+}
+
+model VaultAccessRequest {
+  id                  String         @id @default(cuid())
+  innovationId        String
+  innovation          Innovation     @relation(fields: [innovationId], references: [id], onDelete: Cascade)
+  requesterId         String
+  requester           User           @relation("VaultRequester", fields: [requesterId], references: [id])
+  status              String         @default("REQUESTED") // REQUESTED, NDA_SIGNED, APPROVED, DENIED, REVOKED
+  ndaSignedAt         DateTime?
+  ndaIpAddress        String?
+  ndaSnapshot         String?        @db.Text // JSON snapshot of NDA metadata at time of signing
+  innovatorApprovedAt DateTime?
+  innovatorDeniedAt   DateTime?
+  denialReason        String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  ndaAcceptance       NdaAcceptance?
+
+  @@unique([innovationId, requesterId])
+  @@index([innovationId])
+  @@index([requesterId])
+  @@index([status])
+}
+
+model NdaTemplate {
+  id          String          @id @default(cuid())
+  slug        String
+  version     Int
+  title       String
+  body        String          @db.Text
+  contentHash String
+  active      Boolean         @default(false)
+  effectiveAt DateTime
+  createdAt   DateTime        @default(now())
+  acceptances NdaAcceptance[]
+
+  @@unique([slug, version])
+  @@index([slug, active, effectiveAt])
+}
+
+model NdaAcceptance {
+  id              String             @id @default(cuid())
+  accessRequestId String             @unique
+  accessRequest   VaultAccessRequest @relation(fields: [accessRequestId], references: [id], onDelete: Restrict)
+  templateId      String
+  template        NdaTemplate        @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  acceptorId      String
+  acceptor        User               @relation("NdaAcceptor", fields: [acceptorId], references: [id], onDelete: Restrict)
+  typedName       String
+  accountEmail    String
+  organization    String?
+  innovationId    String
+  contentHash     String
+  acceptedAt      DateTime           @default(now())
+  ipAddress       String?
+  userAgent       String?            @db.Text
+
+  @@index([acceptorId, acceptedAt])
+  @@index([innovationId])
+}
+
+model VaultDocument {
+  id           String      @id @default(cuid())
+  innovationId String
+  innovation   Innovation  @relation(fields: [innovationId], references: [id], onDelete: Restrict)
+  ownerId      String
+  title        String
+  description  String?     @db.Text
+  assetId      String      @unique
+  asset        UploadAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([innovationId, active])
+  @@index([ownerId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// MARKETPLACE
+// ──────────────────────────────────────────────────────────────────────────
+
+enum MarketplacePillar {
+  DIGITAL_TOOLS_IP
+  HEALTH_SECURITY_ANALYTICS
+  LAB_RADIOLOGICAL_HARDWARE
+  PHARMA_DIRECTORY
+}
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FROZEN
+}
+
+enum MarketplaceListingType {
+  PRODUCT
+  SERVICE
+  SOFTWARE
+  FACILITY_PROFILE
+  DIRECTORY_PROFILE
+}
+
+enum BuyerEntityType {
+  PUBLIC_HEALTH_AGENCY
+  HOSPITAL_CLINIC
+  ACCREDITED_LAB
+  NGO_DONOR
+  RESEARCH_CENTER
+}
+
+model MarketplaceVendor {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("VendorUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Section 1: Business ID
+  corporateName      String
+  tradingName        String?
+  country            String
+  registrationNumber String
+  taxId              String?
+  headOfficeAddress  String            @db.Text
+  city               String?
+  postalCode         String?
+  contactPerson      String
+  contactEmail       String
+  contactPhone       String
+  primaryPillar      MarketplacePillar
+
+  // Section 4: Legal Initials (clickwrap)
+  acceptedNoDirectDrugSales     Boolean @default(false)
+  acceptedPureIntermediary      Boolean @default(false)
+  acceptedB2BTestKitRestriction Boolean @default(false)
+  acceptedFullIndemnification   Boolean @default(false)
+  acceptedAIModeration          Boolean @default(false)
+
+  // Status
+  status            VendorStatus @default(PENDING)
+  adminNotes        String?      @db.Text
+  approvedAt        DateTime?
+  frozenAt          DateTime?
+  // Annual licence re-verification (365-day cycle). Set on approval; auto-freeze when passed.
+  licenseExpiryDate DateTime?
+
+  documents    VendorDocument[]
+  listings     MarketplaceListing[]
+  transactions MarketplaceTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([primaryPillar])
+}
+
+model VendorDocument {
+  id               String            @id @default(cuid())
+  vendorId         String
+  vendor           MarketplaceVendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  docType          String // NATIONAL_LICENSE, ORIGIN_PREQUALIFICATION, LOCAL_AUTHORIZATION, DEALER_LETTER, RADIATION_CLEARANCE, FACILITY_ACCREDITATION
+  fileName         String
+  cloudStoragePath String
+  uploadAssetId    String?           @unique
+  uploadAsset      UploadAsset?      @relation("VendorDocumentUpload", fields: [uploadAssetId], references: [id], onDelete: Restrict)
+  contentType      String            @default("application/pdf")
+  expiryDate       DateTime?
+  uploadedAt       DateTime          @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendorId])
+}
+
+model MarketplaceListing {
+  id            String                 @id @default(cuid())
+  vendorId      String
+  vendor        MarketplaceVendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  pillar        MarketplacePillar
+  listingType   MarketplaceListingType
+  title         String
+  description   String                 @db.Text
+  features      String?                @db.Text // JSON array of feature bullets
+  catalogNumber String?
+  manufacturer  String?
+  regionFocus   String?
+  externalUrl   String? // For pharmacy directory link-out
+  imageUrls     String?                @db.Text // JSON array of image URLs
+
+  isPublished        Boolean   @default(false)
+  isPaxCertified     Boolean   @default(false)
+  paxCertifiedAt     DateTime?
+  paxCertifiedReason String? // "Funded via investor", "Debate-originated", "PAX-approved"
+
+  priceDisplay String? // e.g. "KSh 50,000" or "Contact vendor"
+
+  // AI content moderation (FLAG-only — never auto-hides; human admin decides)
+  moderationStatus     String  @default("OK") // OK | FLAGGED
+  moderationReason     String? @db.Text
+  moderationCategories String? // JSON array of category strings
+
+  reviews      MarketplaceReview[]
+  transactions MarketplaceTransaction[]
+  avgRating    Float?
+  reviewCount  Int                      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendorId])
+  @@index([pillar])
+  @@index([isPublished])
+  @@index([isPaxCertified])
+  @@index([moderationStatus])
+}
+
+model MarketplaceTransaction {
+  id           String             @id @default(cuid())
+  listingId    String
+  listing      MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  vendorId     String
+  vendor       MarketplaceVendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  recordedById String
+  recordedBy   User               @relation("TxnRecorder", fields: [recordedById], references: [id], onDelete: Cascade)
+  buyerName    String
+  amount       Float
+  currency     String             @default("KSh")
+  feePercent   Float              @default(5)
+  feeAmount    Float
+  netToVendor  Float
+  status       String             @default("RECORDED") // RECORDED | SETTLED (display only — PAX processes no payments)
+  notes        String?            @db.Text
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([vendorId])
+  @@index([listingId])
+  @@index([recordedById])
+}
+
+model MarketplaceReview {
+  id         String             @id @default(cuid())
+  listingId  String
+  listing    MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User               @relation("ReviewerUser", fields: [reviewerId], references: [id], onDelete: Cascade)
+  rating     Int // 1-5
+  comment    String?            @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([listingId, reviewerId])
+  @@index([listingId])
+}
+
+model MarketplaceBuyer {
+  id                         String          @id @default(cuid())
+  userId                     String          @unique
+  user                       User            @relation("BuyerUser", fields: [userId], references: [id], onDelete: Cascade)
+  institutionName            String
+  entityType                 BuyerEntityType
+  jurisdiction               String
+  country                    String?
+  physicalAddress            String?         @db.Text
+  city                       String?
+  postalCode                 String?
+  phone                      String?
+  procurementOfficer         String
+  officerTitle               String?
+  officerEmail               String
+  accreditationPath          String? // cloud storage path
+  accreditationUploadAssetId String?         @unique
+  accreditationUploadAsset   UploadAsset?    @relation("BuyerAccreditationUpload", fields: [accreditationUploadAssetId], references: [id], onDelete: Restrict)
+  acceptedDirectProcurement  Boolean         @default(false)
+  status                     String          @default("PENDING") // PENDING, VERIFIED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Verification ladder requests (Identity / Expert level)
+model VerificationRequest {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserVerificationRequests", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Which level is being requested
+  requestedLevel VerificationLevel // IDENTITY_VERIFIED or EXPERT_VERIFIED
+
+  // Documents submitted for this request
+  documents VerificationDocument[]
+
+  // For Expert: peer vouchers (names/emails of 2+ peers)
+  peerVouchers String? @db.Text // JSON array of {name, email, relationship}
+
+  status     VerificationRequestStatus @default(PENDING)
+  adminNotes String?                   @db.Text
+  reviewedAt DateTime?
+  reviewedBy String? // admin user ID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedLevel])
+}
+
+model VerificationDocument {
+  id               String              @id @default(cuid())
+  requestId        String
+  request          VerificationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  docType          String // NATIONAL_ID, PASSPORT, PROFESSIONAL_LICENSE, BOARD_CERTIFICATE, PEER_LETTER, OTHER
+  fileName         String
+  cloudStoragePath String
+  uploadAssetId    String?             @unique
+  uploadAsset      UploadAsset?        @relation("VerificationDocumentUpload", fields: [uploadAssetId], references: [id], onDelete: Restrict)
+  contentType      String              @default("application/pdf")
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+}
+
+// ---------------------------------------------------------------------------
+// Data protection: append-only consent ledger and audit trail
+// Kenya Data Protection Act 2019 s.32 (proof of consent) and s.25 (accountability)
+// ---------------------------------------------------------------------------
+
+enum ConsentType {
+  ACCOUNT_TERMS
+  PRIVACY_POLICY
+  HEALTH_DATA_PROCESSING
+  MARKETING
+  CROSS_BORDER_TRANSFER
+}
+
+model ConsentRecord {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation("UserConsentRecords", fields: [userId], references: [id], onDelete: Cascade)
+  consentType   ConsentType
+  granted       Boolean     @default(true)
+  policyVersion String?
+  termsVersion  String?
+  grantedAt     DateTime    @default(now())
+  withdrawnAt   DateTime?
+  ipAddress     String?
+  userAgent     String?     @db.Text
+  createdAt     DateTime    @default(now())
+
+  @@index([userId, consentType])
+  @@index([grantedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+  actorEmail String?
+  action     String
+  entityType String?
+  entityId   String?
+  outcome    String   @default("SUCCESS")
+  ipAddress  String?
+  userAgent  String?  @db.Text
+  context    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Granular authorization and clinical relationship boundaries
+// ---------------------------------------------------------------------------
+
+model AccessRole {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?  @db.Text
+  isSystem    Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  assignments UserAccessRole[]
+
+  @@index([active])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  resource    String
+  action      String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roles RolePermission[]
+  users UserPermission[]
+
+  @@index([resource, action])
+}
+
+model RolePermission {
+  id           String      @id @default(cuid())
+  accessRoleId String
+  accessRole   AccessRole  @relation(fields: [accessRoleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  scope        AccessScope @default(OWN)
+  createdAt    DateTime    @default(now())
+
+  @@unique([accessRoleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserAccessRole {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation("UserAccessRoles", fields: [userId], references: [id], onDelete: Cascade)
+  accessRoleId   String
+  accessRole     AccessRole  @relation(fields: [accessRoleId], references: [id], onDelete: Cascade)
+  scope          AccessScope @default(OWN)
+  organizationId String?
+  assignedById   String?
+  startsAt       DateTime    @default(now())
+  endsAt         DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([userId, accessRoleId])
+  @@index([accessRoleId])
+  @@index([organizationId])
+  @@index([endsAt])
+}
+
+model UserPermission {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation("UserDirectPermissions", fields: [userId], references: [id], onDelete: Cascade)
+  permissionId   String
+  permission     Permission       @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  effect         PermissionEffect @default(ALLOW)
+  scope          AccessScope      @default(OWN)
+  organizationId String?
+  assignedById   String?
+  expiresAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([userId, permissionId])
+  @@index([permissionId])
+  @@index([expiresAt])
+}
+
+model ClinicalRelationship {
+  id              String                     @id @default(cuid())
+  practitionerId  String
+  practitioner    User                       @relation("ClinicalPractitioner", fields: [practitionerId], references: [id], onDelete: Restrict)
+  patientId       String
+  patient         User                       @relation("ClinicalPatient", fields: [patientId], references: [id], onDelete: Restrict)
+  status          ClinicalRelationshipStatus @default(ACTIVE)
+  consentedAt     DateTime?
+  establishedById String?
+  endedAt         DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  @@unique([practitionerId, patientId])
+  @@index([patientId, status])
+  @@index([practitionerId, status])
+}
+
+model AuthToken {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation("UserAuthTokens", fields: [userId], references: [id], onDelete: Cascade)
+  purpose   AuthTokenPurpose
+  tokenHash String           @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int              @default(0)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, purpose, expiresAt])
+  @@index([expiresAt])
+}
+
+model RateLimitBucket {
+  key          String    @id
+  windowStart  DateTime
+  count        Int       @default(0)
+  blockedUntil DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@index([blockedUntil])
+  @@index([updatedAt])
+}
+
+model NotificationTemplate {
+  id                  String              @id @default(cuid())
+  slug                String
+  channel             NotificationChannel
+  locale              String              @default("en")
+  version             Int                 @default(1)
+  subject             String?
+  body                String              @db.Text
+  actionLabel         String?
+  actionUrl           String?
+  requiredVariables   String[]            @default([])
+  enabled             Boolean             @default(true)
+  sensitiveAllowed    Boolean             @default(false)
+  nonDisableable      Boolean             @default(false)
+  providerTemplateKey String?
+  createdById         String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@unique([slug, channel, locale, version])
+  @@index([slug, channel, locale, enabled])
+}
+
+model NotificationEvent {
+  id              String                  @id @default(cuid())
+  userId          String?
+  user            User?                   @relation("UserNotificationEvents", fields: [userId], references: [id], onDelete: SetNull)
+  templateSlug    String
+  templateVersion Int
+  locale          String                  @default("en")
+  variables       Json
+  idempotencyKey  String                  @unique
+  priority        Int                     @default(0)
+  status          NotificationEventStatus @default(PENDING)
+  attempts        Int                     @default(0)
+  maxAttempts     Int                     @default(5)
+  availableAt     DateTime                @default(now())
+  lockedAt        DateTime?
+  processedAt     DateTime?
+  lastError       String?                 @db.Text
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  deliveries NotificationDelivery[]
+
+  @@index([status, availableAt, priority])
+  @@index([userId, createdAt])
+}
+
+model NotificationDelivery {
+  id                String                     @id @default(cuid())
+  eventId           String
+  event             NotificationEvent          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  channel           NotificationChannel
+  recipient         String
+  provider          String?
+  providerMessageId String?
+  status            NotificationDeliveryStatus @default(PENDING)
+  attempts          Int                        @default(0)
+  nextAttemptAt     DateTime                   @default(now())
+  lastError         String?                    @db.Text
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  deadLetteredAt    DateTime?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  @@unique([eventId, channel, recipient])
+  @@index([status, nextAttemptAt])
+  @@index([providerMessageId])
+}
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled    Boolean  @default(true)
+  smsEnabled      Boolean  @default(false)
+  whatsappEnabled Boolean  @default(false)
+  marketingEmail  Boolean  @default(false)
+  marketingSms    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UploadAsset {
+  id                  String        @id @default(cuid())
+  ownerId             String
+  owner               User          @relation("UserUploadAssets", fields: [ownerId], references: [id], onDelete: Restrict)
+  purpose             UploadPurpose
+  status              UploadStatus  @default(PENDING_UPLOAD)
+  originalFileName    String
+  objectKey           String        @unique
+  expectedContentType String
+  expectedSize        Int
+  expectedChecksum    String?
+  actualContentType   String?
+  actualSize          Int?
+  actualChecksum      String?
+  objectEtag          String?
+  scanProvider        String?
+  scanReference       String?
+  scanResult          String?       @db.Text
+  completedAt         DateTime?
+  scannedAt           DateTime?
+  retainedUntil       DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  accessLogs           UploadAssetAccessLog[]
+  gpsEvidence          GpsEvidence?           @relation("GpsEvidenceUpload")
+  vendorDocument       VendorDocument?        @relation("VendorDocumentUpload")
+  verificationDocument VerificationDocument?  @relation("VerificationDocumentUpload")
+  buyerAccreditation   MarketplaceBuyer?      @relation("BuyerAccreditationUpload")
+  jobApplications      JobApplication[]
+  vaultDocument        VaultDocument?
+
+  @@index([ownerId, createdAt])
+  @@index([status, createdAt])
+  @@index([retainedUntil])
+}
+
+model UploadAssetAccessLog {
+  id        String      @id @default(cuid())
+  assetId   String
+  asset     UploadAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  actorId   String?
+  action    String
+  outcome   String      @default("SUCCESS")
+  ipAddress String?
+  userAgent String?     @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([assetId, createdAt])
+  @@index([actorId, createdAt])
+}
