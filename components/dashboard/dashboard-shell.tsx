@@ -25,8 +25,10 @@ import Image from 'next/image';
 import { NotificationBell } from '@/components/hub/notification-bell';
 import { SurfaceSwitcher } from '@/components/hub/surface-switcher';
 import useSWR from 'swr';
+import { roleLabel } from '@/lib/access';
 
 const navItems = [
+  { href: '/dashboard/practice', label: 'Practice Workspace', icon: Wallet, permission: 'practice.read' },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.read' },
   { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar, permission: 'hub.appointment.read' },
   { href: '/dashboard/patients', label: 'Patients', icon: Users, permission: 'hub.patient.read' },
@@ -123,7 +125,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="flex items-center gap-2">
         <NotificationBell />
         <span className="hidden text-sm text-muted-foreground sm:inline">
-          {session?.user?.role === 'PRACTITIONER' ? 'Health Practitioner' : session?.user?.role === 'PATIENT' ? 'Patient' : 'Admin'}
+          {roleLabel(session?.user?.role)}
         </span>
       </div>
     </div>

@@ -1,6 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { expandedPracticePath, practiceWorkspaceForOwner } from '@/lib/practice-legacy';
+import { practiceTransaction, lockPractice } from '@/lib/practice-db';
+import { assertCalendarAvailable } from '@/lib/practice-calendar-service';
+import { PracticeError } from '@/lib/practice-policy';
 import { prisma } from '@/lib/db';
 import { requirePermission } from '@/lib/authorization';
 import { z } from 'zod';
@@ -81,7 +85,11 @@ export async function POST(req: NextRequest) {
     ]);
     if (!patient || !relationship) return NextResponse.json({ error: 'Patient not found' }, { status: 404 });
 
-    const appointment = await prisma.appointment.create({
+    if (await expandedPracticePath(practitionerId)) return NextResponse.json({ error: 'Use the practice workspace calendar to book appointments.' }, { status: 409 });
+    const workspace = await practiceWorkspaceForOwner(practitionerId);
+    const appointment = await practiceTransaction(async (tx) => {
+      if (workspace) { await lockPractice(tx, workspace.id); await assertCalendarAvailable(tx, workspace.id, practitionerId, [{ startsAt: new Date(dateTime), endsAt: new Date(Date.parse(dateTime) + 1800000) }], [], null, false); }
+      return tx.appointment.create({
       data: {
         practitionerId,
         patientId,
@@ -97,8 +105,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    });
     return NextResponse.json(appointment, { status: 201 });
   } catch (error: any) {
+    if (error instanceof PracticeError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Appointment create error:', error);
     return NextResponse.json({ error: 'Failed to create appointment' }, { status: 500 });
   }

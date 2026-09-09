@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { hasTier } from '@/lib/access';
+import { expandedPracticePath } from '@/lib/practice-legacy';
 import { authorizeUser } from '@/lib/authorization';
 import type { PermissionKey } from '@/lib/permissions';
 
@@ -17,6 +18,9 @@ export async function requireHubPractitioner(permission: PermissionKey = 'hub.pa
   if (!session?.user?.id) return { ok: false, status: 401, error: 'Unauthorized' };
   const permissionResult = await authorizeUser(session.user.id, permission);
   if (!permissionResult.ok) return { ok: false, status: permissionResult.status, error: permissionResult.error };
+  if ((permission.startsWith('hub.invoice.') && !permission.endsWith('.read') || permission === 'hub.reminder.manage') && await expandedPracticePath(session.user.id)) {
+    return { ok: false, status: 409, error: 'Use the practice workspace to issue invoices, record receipts, and request adjustments.' };
+  }
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { role: true, tier: true, hubMember: true, name: true },

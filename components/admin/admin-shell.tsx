@@ -21,6 +21,7 @@ const navItems = [
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/epidemiology', label: 'Epidemiology', icon: Activity },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/facilities', label: 'Health facilities', icon: Activity },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

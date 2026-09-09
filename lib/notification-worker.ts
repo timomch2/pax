@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { renderNotificationTemplate, renderNotificationTextTemplate } from '@/lib/notification-service';
+import { practiceDeliveryAllowed } from '@/lib/practice-delivery';
 import { sendEmail } from '@/lib/notification-provider';
 
 const RETRY_SECONDS = [60, 5 * 60, 30 * 60, 2 * 60 * 60, 6 * 60 * 60];
@@ -66,6 +67,10 @@ async function processEvent(eventId: string): Promise<void> {
     const variables = event.variables as Record<string, string | number | boolean | null>;
     for (const delivery of event.deliveries) {
       if (delivery.status === 'SENT' || delivery.status === 'DELIVERED' || delivery.status === 'SKIPPED') continue;
+      if (!(await practiceDeliveryAllowed(event.idempotencyKey, delivery.recipient))) {
+        await prisma.notificationDelivery.update({ where: { id: delivery.id }, data: { status: 'SKIPPED', lastError: 'Practice notification is no longer current or permitted' } });
+        continue;
+      }
       const emailDisabled = delivery.channel === 'EMAIL' && event.user?.notificationPreference?.emailEnabled === false;
       if (emailDisabled && !template.nonDisableable) {
         await prisma.notificationDelivery.update({ where: { id: delivery.id }, data: { status: 'SKIPPED' } });

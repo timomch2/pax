@@ -1,0 +1,19 @@
+'use client';
+import { useState } from 'react';
+import useSWR from 'swr';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { PracticeForm, practiceFetch, practiceSend } from '@/components/hub/practice-form';
+export function PracticeReconciliation({ workspaceId, writable }: { workspaceId: string; writable: boolean }) {
+  const base = `/api/practice/${workspaceId}/reconciliation`, [cursor, setCursor] = useState(''), [status, setStatus] = useState('PENDING'), [scanning, setScanning] = useState(false);
+  const { data, error, mutate } = useSWR<any>(`${base}?status=${status}${cursor ? `&cursor=${cursor}` : ''}`, practiceFetch);
+  return <Card><CardHeader><CardTitle>Historical record reconciliation</CardTitle></CardHeader><CardContent className="space-y-4">
+    <p>Review each original invoice or appointment billing record before importing it. Similar income is flagged but never merged automatically. Historical paid balances remain separate from dated cash receipts when the original receipt dates are unknown. Original records are preserved.</p>
+    {writable && <Button disabled={scanning} onClick={async () => { setScanning(true); try { const result = await practiceSend(base, { action: 'scan' }); await mutate(); toast.success(`${result.staged} financial records staged; ${result.appointmentsLinked} appointments linked.${result.more ? ' Run again to continue.' : ''}`); } catch (e) { toast.error((e as Error).message); } finally { setScanning(false); } }}>{scanning ? 'Scanning…' : 'Scan next batch of legacy records'}</Button>}
+    <label className="block">Review status <select className="ml-3 rounded-md border bg-background p-2" value={status} onChange={(e) => { setStatus(e.target.value); setCursor(''); }}>{['PENDING', 'IMPORTED', 'DUPLICATE', 'EXCLUDED'].map((s) => <option key={s}>{s}</option>)}</select></label>
+    {error && <p role="alert">{error.message}</p>}{data && !data.rows.length && <p>No records in this review status.</p>}
+    {data?.rows.map((row: any) => <div key={row.id} className="space-y-3 rounded-md border p-4"><strong>{row.sourceKey}</strong><p>Original amount: KSh {row.snapshot.source.totalAmount ?? row.snapshot.source.amount}</p><p>{row.snapshot.source.patientName ?? row.snapshot.source.appointment?.patient?.name} · {row.snapshot.source.serviceDesc ?? row.snapshot.source.appointment?.type}</p>{row.snapshot.possibleDuplicates?.length > 0 && <p>Possible duplicate source records: {row.snapshot.possibleDuplicates.join(', ')}</p>}<details><summary className="cursor-pointer">Inspect original source snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(row.snapshot.source, null, 2)}</pre></details>{row.resolution && <p>{row.resolution}</p>}{writable && row.status === 'PENDING' && <PracticeForm fields={[{ name: 'decision', label: 'Decision', required: true, options: [{ value: 'IMPORT', label: 'Import as distinct income' }, { value: 'DUPLICATE', label: 'Already represented by an imported record' }, { value: 'EXCLUDE', label: 'Exclude with a recorded reason' }, { value: 'REFRESH', label: 'Refresh a changed source for review' }] }, { name: 'duplicateOf', label: 'Imported source key (for duplicates)' }, { name: 'reason', label: 'Review reason (at least 10 characters)', type: 'textarea', required: true }]} submitLabel="Record reconciliation decision" onSubmit={async (v) => { await practiceSend(base, { id: row.id, decision: v.decision, reason: v.reason, ...(v.duplicateOf ? { duplicateOf: v.duplicateOf } : {}) }); await mutate(); toast.success('Reconciliation recorded'); }} />}</div>)}
+    {data?.nextCursor && <Button variant="outline" onClick={() => setCursor(data.nextCursor)}>Next records</Button>}{cursor && <Button variant="outline" onClick={() => setCursor('')}>First page</Button>}
+  </CardContent></Card>;
+}

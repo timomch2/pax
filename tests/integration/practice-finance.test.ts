@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'crypto';
+import { practiceReport } from '@/lib/practice-reports';
+import { prisma } from '@/lib/db';
+import { savePracticePayer, savePracticeTaxRate, issuePracticeInvoice, recordPracticeReceipt, allocatePracticeCredit, proposePracticeAdjustment, reviewPracticeAdjustment, payerBalance, receiptBalance } from '@/lib/practice-finance';
+
+const database = new URL(process.env.DATABASE_URL || 'postgresql://localhost/undefined');
+assert.equal(database.pathname, '/pax_practice_test');
+assert.ok(['127.0.0.1', 'localhost'].includes(database.hostname));
+process.env.PRACTICE_WORKSPACE_ENABLED = 'true';
+
+test('invoice and receipt ledger prevents duplicate income and preserves payer credits, adjustments and withholding', async () => {
+  const suffix = randomUUID();
+  try {
+    const owner = await prisma.user.create({ data: { name: 'Finance Owner', email: `finance-owner-${suffix}@example.test`, role: 'PRACTITIONER', tier: 'TIER2_PROFESSIONAL', hubMember: true } });
+    const finance = await prisma.user.create({ data: { name: 'Finance Staff', email: `finance-staff-${suffix}@example.test`, role: 'STAFF' } });
+    const workspace = await prisma.practiceWorkspace.create({ data: { ownerId: owner.id } });
+    await prisma.practiceMember.create({ data: { workspaceId: workspace.id, userId: finance.id, roles: ['FINANCE'] } });
+    const payer = await savePracticePayer(owner.id, workspace.id, { name: 'Test Payer', kind: 'OTHER' });
+    const unrelatedPayer = await savePracticePayer(owner.id, workspace.id, { name: 'Unrelated Payer', kind: 'OTHER' });
+    const tax = await savePracticeTaxRate(finance.id, workspace.id, { name: 'Test tax', kind: 'TAX', rateBps: 1600 });
+    const withholding = await savePracticeTaxRate(finance.id, workspace.id, { name: 'Test withholding', kind: 'WITHHOLDING', rateBps: 500 });
+    const service = await prisma.practiceService.create({ data: { workspaceId: workspace.id, sourceKey: `test:${suffix}`, description: 'Clinical service', serviceCode: 'CONSULTATION', amountMinor: 10000, serviceDate: new Date(), rateSnapshot: {} } });
+    const invoiceData = { requestKey: randomUUID(), serviceIds: [service.id], taxRateId: tax.id, withholdingRateId: withholding.id, payers: [{ payerId: payer.id, amountMinor: 11600 }] };
+    const invoice = await issuePracticeInvoice(finance.id, workspace.id, invoiceData);
+    assert.equal((await issuePracticeInvoice(finance.id, workspace.id, invoiceData)).id, invoice.id);
+    await assert.rejects(issuePracticeInvoice(finance.id, workspace.id, { ...invoiceData, requestKey: randomUUID() }), /already billed/);
+    const line = await prisma.practiceInvoicePayer.findFirstOrThrow({ where: { invoiceId: invoice.id } });
+    const receiptData = { requestKey: randomUUID(), payerId: payer.id, amountMinor: 12000, receivedAt: new Date().toISOString(), method: 'BANK_TRANSFER', allocations: [{ invoicePayerId: line.id, amountMinor: 11100 }] };
+    const receipts = await Promise.all([recordPracticeReceipt(finance.id, workspace.id, receiptData), recordPracticeReceipt(finance.id, workspace.id, receiptData)]);
+    assert.equal(receipts[0].id, receipts[1].id);
+    assert.equal((await receiptBalance(prisma, receipts[0].id, workspace.id)).availableMinor, 900);
+    assert.equal((await payerBalance(prisma, line.id, workspace.id)).outstandingMinor, 500);
+    const deduction = await proposePracticeAdjustment(finance.id, workspace.id, { requestKey: randomUUID(), kind: 'WITHHOLDING', invoicePayerId: line.id, amountMinor: 500, reason: 'Facility withheld according to configured rate', evidenceReference: 'TEST-CERTIFICATE' });
+    await assert.rejects(reviewPracticeAdjustment(finance.id, workspace.id, { id: deduction.id, decision: 'APPROVED', reason: 'Reviewed evidence' }), /access/);
+    await reviewPracticeAdjustment(owner.id, workspace.id, { id: deduction.id, decision: 'APPROVED', reason: 'Reviewed evidence' });
+    const settled = await payerBalance(prisma, line.id, workspace.id);
+    assert.equal(settled.outstandingMinor, 0);
+    assert.equal(settled.cashMinor, 11100);
+    assert.equal(settled.withholdingMinor, 500);
+    const credit = await proposePracticeAdjustment(finance.id, workspace.id, { requestKey: randomUUID(), kind: 'CREDIT_NOTE', invoicePayerId: line.id, amountMinor: 1000, reason: 'Agreed reduction of service charge' });
+    await reviewPracticeAdjustment(owner.id, workspace.id, { id: credit.id, decision: 'APPROVED', reason: 'Reduction approved' });
+    assert.equal((await receiptBalance(prisma, receipts[0].id, workspace.id)).availableMinor, 1900);
+    const refund = await proposePracticeAdjustment(finance.id, workspace.id, { requestKey: randomUUID(), kind: 'REFUND', receiptId: receipts[0].id, amountMinor: 1000, occurredAt: new Date().toISOString(), reason: 'Refund returned externally' });
+    await reviewPracticeAdjustment(owner.id, workspace.id, { id: refund.id, decision: 'APPROVED', reason: 'External refund confirmed' });
+    assert.equal((await receiptBalance(prisma, receipts[0].id, workspace.id)).availableMinor, 900);
+    const excessiveRefund = await proposePracticeAdjustment(finance.id, workspace.id, { requestKey: randomUUID(), kind: 'REFUND', receiptId: receipts[0].id, amountMinor: 1000, occurredAt: new Date().toISOString(), reason: 'Refund above remaining funds' });
+    await assert.rejects(reviewPracticeAdjustment(owner.id, workspace.id, { id: excessiveRefund.id, decision: 'APPROVED', reason: 'Attempt excess refund' }), /exceeds/);
+    const service2 = await prisma.practiceService.create({ data: { workspaceId: workspace.id, sourceKey: `test-2:${suffix}`, description: 'Second service', serviceCode: 'CONSULTATION', amountMinor: 500, serviceDate: new Date(), rateSnapshot: {} } });
+    const invoice2 = await issuePracticeInvoice(finance.id, workspace.id, { requestKey: randomUUID(), serviceIds: [service2.id], payers: [{ payerId: unrelatedPayer.id, amountMinor: 500 }] });
+    const line2 = await prisma.practiceInvoicePayer.findFirstOrThrow({ where: { invoiceId: invoice2.id } });
+    await assert.rejects(allocatePracticeCredit(finance.id, workspace.id, { requestKey: randomUUID(), receiptId: receipts[0].id, allocations: [{ invoicePayerId: line2.id, amountMinor: 500 }] }), /different payer/);
+    const report = await practiceReport(owner.id, workspace.id, { from: new Date(Date.now() - 86400000).toISOString(), to: new Date(Date.now() + 86400000).toISOString() });
+    assert.equal(report.totals.taxMinor, 1600);
+    assert.equal(report.totals.taxAdjustmentsMinor, -138);
+    assert.equal(report.totals.netTaxMinor, 1462);
+    assert.equal(report.totals.withholdingApprovedMinor, 500);
+    assert.equal((await receiptBalance(prisma, receipts[0].id, workspace.id)).receipt.amountMinor, 12000);
+  } finally { await prisma.$disconnect(); }
+});

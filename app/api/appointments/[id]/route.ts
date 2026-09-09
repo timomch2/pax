@@ -1,6 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { expandedPracticePath, practiceWorkspaceForOwner } from '@/lib/practice-legacy';
+import { practiceTransaction, lockPractice } from '@/lib/practice-db';
+import { assertCalendarAvailable } from '@/lib/practice-calendar-service';
+import { PracticeError } from '@/lib/practice-policy';
 import { prisma } from '@/lib/db';
 import { requirePermission } from '@/lib/authorization';
 import { z } from 'zod';
@@ -29,6 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     );
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
+    if (await expandedPracticePath(existing.practitionerId) || await prisma.practiceEvent.findUnique({ where: { legacyAppointmentId: existing.id } })) return NextResponse.json({ error: 'Use the practice workspace calendar for this appointment.' }, { status: 409 });
+
     const parsed = updateAppointmentSchema.safeParse(await req.json());
     if (!parsed.success) return NextResponse.json({ error: 'Invalid appointment data', details: parsed.error.flatten() }, { status: 400 });
     const { status, fee, location, notes, type, dateTime } = parsed.data;
@@ -41,7 +47,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (type) updateData.type = type;
     if (dateTime) updateData.dateTime = new Date(dateTime);
 
-    const updated = await prisma.appointment.update({
+    const workspace = await practiceWorkspaceForOwner(existing.practitionerId);
+    const updated = await practiceTransaction(async (tx) => {
+      if (workspace) {
+        await lockPractice(tx, workspace.id);
+        if ((status ?? existing.status) === 'SCHEDULED' && (dateTime || status)) {
+          const startsAt = new Date(dateTime ?? existing.dateTime);
+          await assertCalendarAvailable(tx, workspace.id, existing.practitionerId, [{ startsAt, endsAt: new Date(startsAt.getTime() + 1800000) }], [], null, false, [existing.id]);
+        }
+      }
+      const updated = await tx.appointment.update({
       where: { id: params.id },
       data: updateData,
       include: {
@@ -51,7 +66,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // If completed, create/update billing record
     if (status === 'COMPLETED') {
-      await prisma.billingRecord.upsert({
+      await tx.billingRecord.upsert({
         where: { appointmentId: params.id },
         create: {
           appointmentId: params.id,
@@ -64,8 +79,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       });
     }
 
+      return updated;
+    });
     return NextResponse.json(updated);
   } catch (error: any) {
+    if (error instanceof PracticeError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Appointment update error:', error);
     return NextResponse.json({ error: 'Failed to update appointment' }, { status: 500 });
   }

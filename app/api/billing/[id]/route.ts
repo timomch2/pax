@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { expandedPracticePath } from '@/lib/practice-legacy';
 import { prisma } from '@/lib/db';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -26,6 +27,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!record) {
       return NextResponse.json({ error: 'Record not found' }, { status: 404 });
     }
+
+    if (await expandedPracticePath(session.user.id) || await prisma.practiceReconciliation.findFirst({ where: { sourceKey: `legacy:billing:${record.id}`, status: { not: 'PENDING' } } })) return NextResponse.json({ error: 'Use the practice workspace receipt and adjustment ledger for this record.' }, { status: 409 });
 
     const updated = await prisma.billingRecord.update({
       where: { id: params.id },

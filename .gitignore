@@ -19,3 +19,6 @@ node_modules/
 
 # Generated during standalone builds
 __abacus_error_reporter.js
+
+# Isolated practitioner build verification
+.next-practice-build/

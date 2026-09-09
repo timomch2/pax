@@ -9,6 +9,7 @@ datasource db {
 }
 
 enum UserRole {
+  STAFF
   PRACTITIONER
   PATIENT
   ADMIN
@@ -480,10 +481,238 @@ model User {
   securityIncidentsReported           SecurityIncident[]          @relation("SecurityIncidentReporter")
   securityIncidentsAssigned           SecurityIncident[]          @relation("SecurityIncidentAssignee")
   ndaAcceptances                      NdaAcceptance[]             @relation("NdaAcceptor")
+  practiceWorkspace                   PracticeWorkspace?
+  practiceMemberships                 PracticeMember[]
+  legacyPracticePatients              HubPatient[]                @relation("LegacyPracticePatient")
 
   @@index([role])
   @@index([tier])
   @@index([email])
+}
+
+enum PracticeTeamRole {
+  RECEPTION
+  FINANCE
+}
+
+enum FacilityReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PracticeWorkspace {
+  id                       String                   @id @default(cuid())
+  ownerId                  String                   @unique
+  owner                    User                     @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  bookingSlug              String                   @unique @default(cuid())
+  bookingEnabled           Boolean                  @default(false)
+  appointmentReminderHours Int                      @default(24)
+  overdueReminderDays      Int[]                    @default([1, 7])
+  remindersEnabled         Boolean                  @default(true)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  members                  PracticeMember[]
+  invitations              PracticeInvitation[]
+  facilities               ConsultingFacility[]
+  auditEvents              PracticeAuditEvent[]
+  eventSeries              PracticeEventSeries[]
+  events                   PracticeEvent[]
+  services                 PracticeService[]
+  payers                   PracticePayer[]
+  invoices                 PracticeInvoice[]
+  receipts                 PracticeReceipt[]
+  taxRates                 PracticeTaxRate[]
+  adjustments              PracticeAdjustment[]
+  reconciliations          PracticeReconciliation[]
+  availability             PracticeAvailability[]
+  bookingRequests          PracticeBookingRequest[]
+}
+
+model PracticeAvailability {
+  id              String            @id @default(cuid())
+  workspaceId     String
+  workspace       PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  weekday         Int?
+  date            String?
+  closed          Boolean           @default(false)
+  startMinute     Int               @default(540)
+  endMinute       Int               @default(1020)
+  durationMinutes Int               @default(30)
+  bufferMinutes   Int               @default(0)
+  facilityId      String?
+  location        String
+  appointmentType String
+  feeMinor        Int               @default(0)
+  active          Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+
+  @@index([workspaceId, active])
+}
+
+model PracticeBookingRequest {
+  id               String            @id @default(cuid())
+  workspaceId      String
+  workspace        PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  email            String
+  name             String
+  phone            String?
+  availabilityId   String
+  startsAt         DateTime
+  endsAt           DateTime
+  status           String            @default("UNVERIFIED")
+  tokenHash        String            @unique
+  tokenExpiresAt   DateTime
+  tokenUsedAt      DateTime?
+  verifiedAt       DateTime?
+  proposedStartsAt DateTime?
+  proposedEndsAt   DateTime?
+  patientId        String?
+  eventId          String?           @unique
+  version          Int               @default(1)
+  remindersEnabled Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([workspaceId, status, startsAt])
+}
+
+model PracticeMember {
+  id          String             @id @default(cuid())
+  workspaceId String
+  workspace   PracticeWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  roles       PracticeTeamRole[]
+  revokedAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId, revokedAt])
+}
+
+model PracticeInvitation {
+  id          String             @id @default(cuid())
+  workspaceId String
+  workspace   PracticeWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  email       String
+  roles       PracticeTeamRole[]
+  tokenHash   String             @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  invitedById String
+  createdAt   DateTime           @default(now())
+
+  @@index([workspaceId, email])
+}
+
+model PracticeAuditEvent {
+  id          String            @id @default(cuid())
+  workspaceId String
+  workspace   PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  actorId     String
+  action      String
+  entityId    String?
+  context     Json?
+  createdAt   DateTime          @default(now())
+
+  @@index([workspaceId, createdAt])
+}
+
+model HealthFacility {
+  id                 String               @id @default(cuid())
+  countryCode        String
+  officialName       String
+  normalizedName     String
+  county             String?
+  subCounty          String?
+  town               String?
+  facilityType       String?
+  ownership          String?
+  kephLevel          String?
+  regulatoryBody     String?
+  source             String?
+  sourceKey          String?              @unique
+  fidCode            String?
+  frCode             String?
+  registrationNumber String?
+  operationalStatus  String?
+  sourceSnapshot     Json?
+  sourceSeenAt       DateTime?
+  version            Int                  @default(1)
+  createdById        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  consultations      ConsultingFacility[]
+  corrections        FacilityCorrection[]
+  practiceEvents     PracticeEvent[]
+  practiceServices   PracticeService[]
+
+  @@index([countryCode, normalizedName])
+  @@index([countryCode, county])
+  @@index([fidCode])
+  @@index([registrationNumber])
+}
+
+model ConsultingFacility {
+  id              String            @id @default(cuid())
+  workspaceId     String
+  workspace       PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  facilityId      String
+  facility        HealthFacility    @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+  startsAt        DateTime
+  endsAt          DateTime?
+  rateType        String            @default("SERVICE")
+  rateMinor       Int               @default(0)
+  coveredServices String[]          @default([])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([workspaceId, facilityId, startsAt])
+  @@index([workspaceId, endsAt])
+}
+
+model FacilityCorrection {
+  id           String               @id @default(cuid())
+  facilityId   String?
+  facility     HealthFacility?      @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+  proposedById String?
+  importRunId  String?
+  dedupeKey    String?              @unique
+  baseVersion  Int?
+  proposed     Json
+  reason       String
+  status       FacilityReviewStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewReason String?
+  createdAt    DateTime             @default(now())
+
+  @@index([status, createdAt])
+}
+
+model FacilityImportRun {
+  id            String    @id @default(cuid())
+  source        String    @default("KE_NHFR")
+  requestedById String
+  status        String    @default("PENDING")
+  nextPage      Int       @default(0)
+  pageSize      Int       @default(30)
+  totalMatches  Int?
+  processed     Int       @default(0)
+  added         Int       @default(0)
+  queued        Int       @default(0)
+  skipped       Int       @default(0)
+  leaseToken    String?
+  leaseUntil    DateTime?
+  error         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  finishedAt    DateTime?
+
+  @@index([status, updatedAt])
 }
 
 model Account {
@@ -833,6 +1062,7 @@ model Appointment {
   updatedAt      DateTime          @updatedAt
 
   billingRecord BillingRecord?
+  practiceEvent PracticeEvent?
 
   @@index([practitionerId])
   @@index([patientId])
@@ -941,23 +1171,303 @@ model PatientNote {
 
 // A patient record owned by a practitioner (NOT a PAX platform user).
 model HubPatient {
-  id             String   @id @default(cuid())
-  practitionerId String
-  practitioner   User     @relation("PractitionerHubPatients", fields: [practitionerId], references: [id], onDelete: Cascade)
-  name           String
-  phone          String?
-  email          String?
-  patientCode    String?  @unique // system-generated permanent ID, e.g. PAX-P-4K7Q2M
-  nationalId     String?
-  patientRef     String? // practitioner's own reference / file number
-  notes          String?  @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  remindersEnabled Boolean  @default(true)
+  id               String   @id @default(cuid())
+  practitionerId   String
+  practitioner     User     @relation("PractitionerHubPatients", fields: [practitionerId], references: [id], onDelete: Cascade)
+  name             String
+  phone            String?
+  email            String?
+  patientCode      String?  @unique // system-generated permanent ID, e.g. PAX-P-4K7Q2M
+  nationalId       String?
+  patientRef       String? // practitioner's own reference / file number
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  invoices Invoice[] @relation("HubPatientInvoices")
+  invoices      Invoice[]             @relation("HubPatientInvoices")
+  events        PracticeEvent[]
+  practiceNotes PracticePatientNote[]
+  legacyUserId  String?
+  legacyUser    User?                 @relation("LegacyPracticePatient", fields: [legacyUserId], references: [id], onDelete: Restrict)
+  services      PracticeService[]
 
+  @@unique([practitionerId, legacyUserId])
   @@index([practitionerId])
   @@index([name])
+}
+
+enum PracticeEventKind {
+  APPOINTMENT
+  CONSULTING
+  MEETING
+}
+
+enum PracticeEventStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model PracticeEventSeries {
+  id          String            @id @default(cuid())
+  workspaceId String
+  workspace   PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  frequency   String
+  until       DateTime
+  createdAt   DateTime          @default(now())
+  events      PracticeEvent[]
+}
+
+model PracticeEvent {
+  bufferMinutes       Int                  @default(0)
+  id                  String               @id @default(cuid())
+  workspaceId         String
+  workspace           PracticeWorkspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  patientId           String?
+  patient             HubPatient?          @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  facilityId          String?
+  facility            HealthFacility?      @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+  seriesId            String?
+  series              PracticeEventSeries? @relation(fields: [seriesId], references: [id], onDelete: Restrict)
+  legacyAppointmentId String?              @unique
+  legacyAppointment   Appointment?         @relation(fields: [legacyAppointmentId], references: [id], onDelete: Restrict)
+  kind                PracticeEventKind
+  status              PracticeEventStatus  @default(SCHEDULED)
+  title               String
+  serviceCode         String?
+  startsAt            DateTime
+  endsAt              DateTime
+  location            String?
+  meetingUrl          String?
+  notes               String?              @db.Text
+  billable            Boolean              @default(false)
+  feeMinor            Int                  @default(0)
+  rateSnapshot        Json                 @default("{}")
+  overrideReason      String?
+  createdById         String
+  version             Int                  @default(1)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  service             PracticeService?
+
+  @@index([workspaceId, startsAt, endsAt])
+  @@index([seriesId, startsAt])
+}
+
+model PracticeService {
+  id                String               @id @default(cuid())
+  workspaceId       String
+  workspace         PracticeWorkspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  sourceKey         String               @unique
+  eventId           String?              @unique
+  event             PracticeEvent?       @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  facilityId        String?
+  facility          HealthFacility?      @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+  patientId         String?
+  patient           HubPatient?          @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  serviceCode       String
+  description       String
+  serviceDate       DateTime
+  amountMinor       Int
+  coveredByRetainer Boolean              @default(false)
+  rateSnapshot      Json
+  createdAt         DateTime             @default(now())
+  invoiceLine       PracticeInvoiceLine?
+
+  @@index([workspaceId, serviceDate])
+}
+
+model PracticePatientNote {
+  id        String     @id @default(cuid())
+  patientId String
+  patient   HubPatient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  authorId  String
+  body      String     @db.Text
+  createdAt DateTime   @default(now())
+
+  @@index([patientId, createdAt])
+}
+
+model PracticePayer {
+  remindersEnabled Boolean                @default(true)
+  id               String                 @id @default(cuid())
+  workspaceId      String
+  workspace        PracticeWorkspace      @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  kind             String
+  name             String
+  identityKey      String
+  facilityId       String?
+  patientId        String?
+  email            String?
+  phone            String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  invoicePayers    PracticeInvoicePayer[]
+  receipts         PracticeReceipt[]
+
+  @@unique([workspaceId, identityKey])
+  @@index([workspaceId, kind])
+}
+
+model PracticeTaxRate {
+  id          String            @id @default(cuid())
+  workspaceId String
+  workspace   PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  name        String
+  rateBps     Int
+  kind        String            @default("TAX")
+  inclusive   Boolean           @default(false)
+  base        String            @default("NET")
+  active      Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([workspaceId, active])
+}
+
+model PracticeInvoice {
+  id                       String                 @id @default(cuid())
+  workspaceId              String
+  workspace                PracticeWorkspace      @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  number                   String                 @unique
+  sourceKey                String                 @unique
+  requestHash              String
+  legacyInvoiceId          String?                @unique
+  legacyInvoice            Invoice?               @relation(fields: [legacyInvoiceId], references: [id], onDelete: Restrict)
+  issuedAt                 DateTime               @default(now())
+  status                   String                 @default("ISSUED")
+  netMinor                 Int
+  taxMinor                 Int
+  totalMinor               Int
+  expectedWithholdingMinor Int                    @default(0)
+  currency                 String                 @default("KES")
+  includePatientNames      Boolean                @default(false)
+  facilitySnapshot         Json?
+  taxSnapshot              Json
+  createdById              String
+  lines                    PracticeInvoiceLine[]
+  payers                   PracticeInvoicePayer[]
+  adjustments              PracticeAdjustment[]
+
+  @@index([workspaceId, issuedAt])
+}
+
+model PracticeInvoiceLine {
+  id               String          @id @default(cuid())
+  invoiceId        String
+  invoice          PracticeInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  serviceId        String          @unique
+  service          PracticeService @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  description      String
+  serviceCode      String
+  serviceDate      DateTime
+  patientReference String?
+  patientName      String?
+  facilityId       String?
+  amountMinor      Int
+
+  @@index([invoiceId])
+}
+
+model PracticeInvoicePayer {
+  id            String                      @id @default(cuid())
+  invoiceId     String
+  invoice       PracticeInvoice             @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  payerId       String
+  payer         PracticePayer               @relation(fields: [payerId], references: [id], onDelete: Restrict)
+  amountMinor   Int
+  dueAt         DateTime?
+  payerSnapshot Json
+  allocations   PracticeReceiptAllocation[]
+  adjustments   PracticeAdjustment[]
+
+  @@unique([invoiceId, payerId])
+  @@index([payerId, dueAt])
+}
+
+model PracticeReceipt {
+  id           String                      @id @default(cuid())
+  workspaceId  String
+  workspace    PracticeWorkspace           @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  payerId      String
+  payer        PracticePayer               @relation(fields: [payerId], references: [id], onDelete: Restrict)
+  sourceKey    String                      @unique
+  requestHash  String
+  amountMinor  Int
+  receivedAt   DateTime?
+  dateKnown    Boolean                     @default(true)
+  method       PaymentMethod
+  reference    String?
+  recordedById String
+  reversedAt   DateTime?
+  createdAt    DateTime                    @default(now())
+  allocations  PracticeReceiptAllocation[]
+  adjustments  PracticeAdjustment[]
+
+  @@index([workspaceId, receivedAt])
+  @@index([payerId])
+}
+
+model PracticeReceiptAllocation {
+  id             String               @id @default(cuid())
+  receiptId      String
+  receipt        PracticeReceipt      @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  invoicePayerId String
+  invoicePayer   PracticeInvoicePayer @relation(fields: [invoicePayerId], references: [id], onDelete: Restrict)
+  amountMinor    Int
+  sourceKey      String               @unique
+  reversedAt     DateTime?
+  createdAt      DateTime             @default(now())
+
+  @@index([receiptId])
+  @@index([invoicePayerId])
+}
+
+model PracticeAdjustment {
+  id                String                @id @default(cuid())
+  workspaceId       String
+  workspace         PracticeWorkspace     @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  sourceKey         String                @unique
+  requestHash       String
+  kind              String
+  status            String                @default("PENDING")
+  invoiceId         String?
+  invoice           PracticeInvoice?      @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  invoicePayerId    String?
+  invoicePayer      PracticeInvoicePayer? @relation(fields: [invoicePayerId], references: [id], onDelete: Restrict)
+  receiptId         String?
+  receipt           PracticeReceipt?      @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  amountMinor       Int                   @default(0)
+  netMinor          Int                   @default(0)
+  taxMinor          Int                   @default(0)
+  reason            String
+  evidenceReference String?
+  occurredAt        DateTime?
+  proposedById      String
+  reviewedById      String?
+  reviewedAt        DateTime?
+  reviewReason      String?
+  createdAt         DateTime              @default(now())
+
+  @@index([workspaceId, status, createdAt])
+}
+
+model PracticeReconciliation {
+  id           String            @id @default(cuid())
+  workspaceId  String
+  workspace    PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  sourceKey    String            @unique
+  kind         String
+  snapshot     Json
+  status       String            @default("PENDING")
+  resolution   String?
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime          @default(now())
+
+  @@index([workspaceId, status])
 }
 
 // Directory of named payer entities (insurers, SHA, corporates, NGOs).
@@ -999,7 +1509,8 @@ model Invoice {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  payers InvoicePayer[] @relation("InvoicePayers")
+  payers          InvoicePayer[]   @relation("InvoicePayers")
+  practiceInvoice PracticeInvoice?
 
   @@index([practitionerId])
   @@index([status])

@@ -123,6 +123,7 @@ const COMMON: PermissionKey[] = [
 ];
 
 export const ROLE_PERMISSION_KEYS: Record<UserRole, PermissionKey[]> = {
+  STAFF: [],
   ADMIN: PERMISSIONS.map(([key]) => key),
   PRACTITIONER: [
     ...COMMON,
@@ -169,6 +170,7 @@ export const ROLE_PERMISSION_KEYS: Record<UserRole, PermissionKey[]> = {
 };
 
 export const ROLE_SCOPE: Record<UserRole, 'OWN' | 'ORGANIZATION' | 'ALL'> = {
+  STAFF: 'OWN',
   ADMIN: 'ALL',
   PRACTITIONER: 'OWN',
   PATIENT: 'OWN',

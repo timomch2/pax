@@ -173,3 +173,6 @@ export const MANDATE_STAGES: { key: string; label: string }[] = [
   { key: 'PILOT', label: 'Pilot / Seed' },
   { key: 'SCALING', label: 'Scaling / Series A+' },
 ];
+export const PRACTICE_EVENT_KIND_LABELS: Record<string, string> = { APPOINTMENT: 'Patient appointment', CONSULTING: 'Facility consulting session', MEETING: 'Professional meeting' };
+export const PRACTICE_EVENT_STATUS_LABELS: Record<string, string> = { SCHEDULED: 'Scheduled', COMPLETED: 'Completed', CANCELLED: 'Cancelled', NO_SHOW: 'No-show' };
+export const PRACTICE_TEAM_LABELS: Record<string, string> = { RECEPTION: 'Reception', FINANCE: 'Finance' };

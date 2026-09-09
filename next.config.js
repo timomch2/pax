@@ -8,6 +8,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   experimental: {
     outputFileTracingRoot: path.join(__dirname, '../'),
+    outputFileTracingIncludes: { '/api/practice/**': ['./lib/assets/*.woff', './lib/assets/NotoSans-LICENSE.txt'] },
   },
   eslint: {
     ignoreDuringBuilds: true,

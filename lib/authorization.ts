@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
 import type { PermissionKey } from '@/lib/permissions';
+import type { Prisma } from '@prisma/client';
+import { assertPractice, practiceCapabilities, practiceMembershipActive, type PracticeAction } from '@/lib/practice-policy';
 
 export type AuthorizationResource = {
   ownerId?: string | null;
@@ -161,5 +163,35 @@ export async function getUserCapabilities(userId: string): Promise<string[]> {
     if (grant.effect === 'DENY') allowed.delete(grant.permission.key);
     else allowed.add(grant.permission.key);
   }
+  if (process.env.PRACTICE_WORKSPACE_ENABLED === 'true') {
+    const actor = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, additionalRoles: true } });
+    const workspace = await prisma.practiceWorkspace.findFirst({ where: { OR: [{ ownerId: userId }, { members: { some: { userId, revokedAt: null } } }] }, select: { id: true } });
+    if (workspace || actor?.role === 'PRACTITIONER' || actor?.role === 'ADMIN' || actor?.additionalRoles.includes('PRACTITIONER')) allowed.add('practice.read');
+  }
   return [...allowed].sort();
+}
+
+/** Workspace selection is an identifier only: access always comes from the current database membership. */
+export async function authorizePracticeUser(userId: string, workspaceId: string, action: PracticeAction, db: Prisma.TransactionClient = prisma) {
+  assertPractice(process.env.PRACTICE_WORKSPACE_ENABLED === 'true', 404, 'Practice workspace is not enabled');
+  const [actor, workspace] = await Promise.all([
+    db.user.findUnique({ where: { id: userId }, select: { id: true, accountStatus: true } }),
+    db.practiceWorkspace.findUnique({ where: { id: workspaceId }, include: { owner: {
+      select: { id: true, name: true, role: true, additionalRoles: true, accountStatus: true, tier: true, hubMember: true },
+    }, members: { where: { userId, revokedAt: null }, select: { roles: true } } } }),
+  ]);
+  assertPractice(actor?.accountStatus === 'ACTIVE', 403, 'Forbidden');
+  assertPractice(workspace, 404, 'Workspace not found');
+  const isOwner = workspace.ownerId === userId;
+  assertPractice(isOwner || workspace.members.length > 0, 404, 'Workspace not found');
+  const active = practiceMembershipActive(workspace.owner);
+  const capabilities = practiceCapabilities(isOwner, active, workspace.members[0]?.roles ?? []);
+  assertPractice(capabilities.includes(action), 403, active ? 'You do not have access to this action' : 'Professional membership is required; only the owner retains read access');
+  return { actorId: userId, workspaceId, ownerId: workspace.ownerId, ownerName: workspace.owner.name, isOwner, active, capabilities };
+}
+
+export async function requirePractice(workspaceId: string, action: PracticeAction) {
+  const session = await getServerSession(authOptions);
+  assertPractice(session?.user?.id, 401, 'Unauthorized');
+  return authorizePracticeUser(session.user.id, workspaceId, action);
 }
