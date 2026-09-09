@@ -19,6 +19,12 @@ export async function queueCalendarMessage(tx: Db, eventId: string, message: str
 
 /** Re-read mutable state immediately before delivery, including each retry. */
 export async function practiceDeliveryAllowed(key: string, recipient: string): Promise<boolean> {
+  if (key.startsWith('hub-overdue:')) {
+    const payer = await prisma.invoicePayer.findUnique({ where: { id: key.split(':')[1] }, include: { invoice: { include: { practitioner: { select: { email: true, accountStatus: true } } } } } });
+    if (!payer || payer.amountPaid >= payer.amount || payer.invoice.practitioner.email.toLowerCase() !== recipient.toLowerCase() || payer.invoice.practitioner.accountStatus !== 'ACTIVE') return false;
+    // Previously queued legacy reminders also stop at cutover, including while the feature is paused.
+    return !(await prisma.practiceWorkspace.findUnique({ where: { ownerId: payer.invoice.practitionerId }, select: { id: true } }));
+  }
   if (!key.startsWith('practice:')) return true;
   if (process.env.PRACTICE_WORKSPACE_ENABLED !== 'true') return false;
   const [, kind, id, version, period] = key.split(':');
