@@ -45,7 +45,13 @@ test('calendar transactions enforce ownership, clashes, protected history and on
     const futureStart = new Date(Date.now() + 86400000);
     const future = await createPracticeEvents(owner.id, workspace.id, { ...meeting, startsAt: futureStart.toISOString(), endsAt: new Date(futureStart.getTime() + 3600000).toISOString(), recurrence: { frequency: 'WEEKLY', until: new Date(futureStart.getTime() + 14 * 86400000).toISOString() } });
     assert.equal(future.ids.length, 3);
-    await updatePracticeEvent(owner.id, workspace.id, future.ids[1], { action: 'status', version: 1, status: 'CANCELLED', scope: 'FUTURE' });
+    const secondStart = new Date(futureStart.getTime() + 7 * 86400000 + 3600000);
+    await updatePracticeEvent(owner.id, workspace.id, future.ids[1], { action: 'edit', version: 1, scope: 'FUTURE', event: { ...meeting, startsAt: secondStart.toISOString(), endsAt: new Date(secondStart.getTime() + 3600000).toISOString() } });
+    const shifted = await prisma.practiceEvent.findMany({ where: { id: { in: future.ids } }, orderBy: { startsAt: 'asc' } });
+    assert.equal(shifted[0].startsAt.getTime(), futureStart.getTime());
+    assert.equal(shifted[1].startsAt.getTime(), secondStart.getTime());
+    assert.equal(shifted[2].startsAt.getTime(), secondStart.getTime() + 7 * 86400000);
+    await updatePracticeEvent(owner.id, workspace.id, future.ids[1], { action: 'status', version: 2, status: 'CANCELLED', scope: 'FUTURE' });
     assert.equal(await prisma.practiceEvent.count({ where: { id: { in: future.ids }, status: 'CANCELLED' } }), 2);
     assert.equal(await prisma.practiceService.count({ where: { eventId: { in: future.ids } } }), 0);
   } finally { await prisma.$disconnect(); }
