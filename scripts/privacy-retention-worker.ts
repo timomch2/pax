@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import type { DataRetentionPolicy } from '@prisma/client';
 import { prisma } from '@/lib/db';
+import { runTalentRetention } from '@/lib/talent-retention';
 
 const execute = process.argv.includes('--execute');
 
@@ -12,6 +13,7 @@ function cutoff(policy: DataRetentionPolicy) {
 async function applyPolicy(policy: DataRetentionPolicy): Promise<number> {
   const before = cutoff(policy);
   if (policy.action === 'REVIEW') return 0;
+  if (policy.dataCategory === 'TALENT_RECRUITMENT') { const result = await runTalentRetention(execute); return result.applications + result.conversations; }
   if (!execute) {
     switch (policy.dataCategory) {
       case 'EXPIRED_AUTH_TOKENS': return prisma.authToken.count({ where: { expiresAt: { lt: before } } });

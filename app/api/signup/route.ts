@@ -12,9 +12,10 @@ import { createOpaqueToken } from '@/lib/auth-tokens';
 import { enqueueNotification } from '@/lib/notification-service';
 import { strongPasswordSchema } from '@/lib/password-policy';
 import { verifyTurnstile } from '@/lib/bot-protection';
+import { talentEnabled, productUrl, productRoutingEnabled } from '@/lib/product-hosts';
 
 // Patient is no longer a self-registration user type. The 5 PAX user types are below.
-const VALID_ROLES = ['PRACTITIONER', 'INNOVATOR', 'INVESTOR', 'EMPLOYER', 'POLICYMAKER'] as const;
+const VALID_ROLES = ['PRACTITIONER', 'INNOVATOR', 'INVESTOR', 'EMPLOYER', 'POLICYMAKER', 'MEMBER'] as const;
 
 const signupSchema = z.object({
   email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
@@ -34,6 +35,7 @@ const signupSchema = z.object({
   headline: z.string().trim().max(240).optional().nullable(),
   consentGiven: z.literal(true),
   turnstileToken: z.string().max(2048).optional().nullable(),
+  talentOnboarding: z.boolean().optional(),
 }).strict();
 
 export async function POST(req: NextRequest) {
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
     const parsed = signupSchema.safeParse(await req.json());
     if (!parsed.success) return NextResponse.json({ error: 'Invalid registration details', details: parsed.error.flatten() }, { status: 400 });
     const { email, password, name, role, additionalRoles, phone, physicalAddress, city, postalCode, country, medicalRegNumber, specialty, organization, linkedinUrl, headline } = parsed.data;
+    if ((role === 'MEMBER' || additionalRoles.includes('MEMBER')) && (!talentEnabled() || !parsed.data.talentOnboarding || role !== 'MEMBER' || additionalRoles.length)) return NextResponse.json({ error: 'Use Talent registration to create a member account' }, { status: 400 });
     const rateLimit = await enforceRateLimit(req, { name: 'signup', limit: 5, windowSeconds: 60 * 60, blockSeconds: 60 * 60 }, email);
     if (!rateLimit.allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } });
     if (!await verifyTurnstile(req, parsed.data.turnstileToken)) return NextResponse.json({ error: 'Bot verification failed' }, { status: 400 });
@@ -143,7 +146,7 @@ export async function POST(req: NextRequest) {
         variables: {
           name: created.name,
           expiresMinutes,
-          verificationUrl: `${req.nextUrl.origin}/verify-email?token=${encodeURIComponent(token)}`,
+          verificationUrl: productRoutingEnabled() ? productUrl('accounts', `/verify-email?token=${encodeURIComponent(token)}`) : `${req.nextUrl.origin}/verify-email?token=${encodeURIComponent(token)}`,
         },
         idempotencyKey: `email-verification:${created.id}:${tokenHash}`,
         priority: 10,

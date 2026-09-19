@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     if (!limited.allowed) return NextResponse.json({ error: 'Too many upload requests' }, { status: 429 });
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ error: 'Invalid upload request', details: parsed.error.flatten() }, { status: 400 });
+    if (['TALENT_RESUME', 'TALENT_DOCUMENT'].includes(parsed.data.purpose) && !parsed.data.checksumSha256) return NextResponse.json({ error: 'A document checksum is required' }, { status: 400 });
     const policyError = validateUploadPolicy(parsed.data);
     if (policyError) return NextResponse.json({ error: policyError }, { status: 400 });
 
@@ -66,4 +67,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 });
   }
 }
-

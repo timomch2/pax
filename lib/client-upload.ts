@@ -6,7 +6,8 @@ export type UploadPurposeValue =
   | 'VERIFICATION_DOCUMENT'
   | 'VENDOR_DOCUMENT'
   | 'SAFETY_ATTACHMENT'
-  | 'TALENT_RESUME';
+  | 'TALENT_RESUME'
+  | 'TALENT_DOCUMENT';
 
 function hex(buffer: ArrayBuffer): string {
   return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');

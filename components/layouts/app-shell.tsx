@@ -1,5 +1,6 @@
 'use client'
 
+import { ProductSwitcher } from '@/components/product-switcher'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { PanelLeft } from 'lucide-react'
@@ -56,6 +57,8 @@ export function AppShell({
           </Button>
           {header}
         </header>
+
+        <div className="px-4 sm:px-6"><ProductSwitcher /></div>
 
         {/* Content */}
         <main className={cn('p-4 sm:p-6 lg:p-8', className)}>

@@ -22,3 +22,6 @@ __abacus_error_reporter.js
 
 # Isolated practitioner build verification
 .next-practice-build/
+
+# Isolated talent build verification
+.next-talent-build/

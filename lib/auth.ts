@@ -7,12 +7,21 @@ import { prisma } from '@/lib/db';
 import { logAuditRaw } from '@/lib/audit';
 import { enforceIdentifierRateLimit } from '@/lib/rate-limit';
 import { verifyAndConsumeSecondFactor } from '@/lib/mfa';
+import { safeReturnUrl, sharedSessionCookie, talentEnabled } from '@/lib/product-hosts';
+
+export const dynamic = 'force-dynamic';
 
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MINUTES = 15;
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma),
+    ...(talentEnabled() ? { createUser: async (data: { name?: string | null; email: string; emailVerified: Date | null; image?: string | null }) => {
+      const role = await prisma.accessRole.findUniqueOrThrow({ where: { key: 'MEMBER' } });
+      return prisma.user.create({ data: { ...data, name: data.name || 'PAX member', role: 'MEMBER', accessRoleAssignments: { create: { accessRoleId: role.id, scope: 'OWN' } }, notificationPreference: { create: {} } } });
+    } } : {}),
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -177,12 +186,17 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
+        token.sessionStartedAt = Math.floor(Date.now() / 1000);
         token.role = user.role;
         token.id = user.id;
         token.tier = (user as any).tier;
         token.additionalRoles = (user as any).additionalRoles ?? [];
         token.sessionVersion = (user as any).sessionVersion;
         token.permissionVersion = (user as any).permissionVersion;
+      }
+      if (typeof token.sessionStartedAt === 'number' && Date.now() / 1000 - token.sessionStartedAt >= 8 * 60 * 60) {
+        token.authInvalid = true;
+        return token;
       }
       // Refresh authorization state on every JWT evaluation so suspensions,
       // revocations and permission changes take effect without waiting for expiry.
@@ -232,9 +246,8 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
-      if (url.startsWith('/')) return `${baseUrl}${url}`;
-      if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
+      // A completed sign-out may return to the allowlisted sign-in page.
+      return safeReturnUrl(url, baseUrl, '/hub', true);
     },
   },
   pages: {
@@ -250,6 +263,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 8 * 60 * 60,
   },
   cookies: {
+    ...sharedSessionCookie(),
     state: {
       name: 'next-auth.state',
       options: {

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 export type UserRole =
+  | 'MEMBER'
   | 'STAFF'
   | 'PRACTITIONER'
   | 'INNOVATOR'
@@ -33,7 +34,7 @@ export type MembershipTier = 'TIER1_BASIC' | 'TIER2_PROFESSIONAL' | 'TIER3_EXPER
 // ---------------------------------------------------------------------------
 
 export interface UserTypeDef {
-  value: Exclude<UserRole, 'PATIENT' | 'ADMIN' | 'STAFF'>;
+  value: Exclude<UserRole, 'PATIENT' | 'ADMIN' | 'STAFF' | 'MEMBER'>;
   label: string;
   shortLabel: string;
   description: string;
@@ -86,6 +87,7 @@ export const USER_TYPES: UserTypeDef[] = [
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {
+  MEMBER: 'PAX Member',
   STAFF: 'Practice staff',
   PRACTITIONER: 'Health Practitioner',
   INNOVATOR: 'Innovator / Researcher',
@@ -97,6 +99,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 const ROLE_ICONS: Record<UserRole, LucideIcon> = {
+  MEMBER: HeartPulse,
   STAFF: Shield,
   PRACTITIONER: Stethoscope,
   INNOVATOR: Lightbulb,
@@ -213,6 +216,7 @@ export function hasRole(primaryRole?: string | null, additionalRoles?: string[],
 // ---------------------------------------------------------------------------
 
 export function homePathForRole(role?: string | null): string {
+  if (role === 'MEMBER') return '/talent';
   if (role === 'STAFF') return '/dashboard/practice';
   switch (role) {
     case 'INVESTOR':

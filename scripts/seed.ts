@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { PERMISSIONS, ROLE_PERMISSION_KEYS, ROLE_SCOPE } from '../lib/permissions';
 import { VAULT_NDA_BODY, VAULT_NDA_SLUG, VAULT_NDA_TITLE, VAULT_NDA_VERSION, vaultNdaHash } from '../lib/vault-nda';
 import { PRACTICE_NOTIFICATION_TEMPLATES } from '../lib/practice-notifications';
+import { TALENT_NOTIFICATION_TEMPLATES, TALENT_INVITATION_TEMPLATE } from '../lib/talent-notifications';
 
 const prisma = new PrismaClient();
 
@@ -103,6 +104,7 @@ async function seedAuthorization() {
 async function seedNotificationTemplates() {
   const templates = [
     ...PRACTICE_NOTIFICATION_TEMPLATES,
+    ...TALENT_NOTIFICATION_TEMPLATES, TALENT_INVITATION_TEMPLATE,
     {
       slug: 'account.email-verification',
       channel: 'EMAIL' as const,

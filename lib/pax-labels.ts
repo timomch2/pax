@@ -176,3 +176,16 @@ export const MANDATE_STAGES: { key: string; label: string }[] = [
 export const PRACTICE_EVENT_KIND_LABELS: Record<string, string> = { APPOINTMENT: 'Patient appointment', CONSULTING: 'Facility consulting session', MEETING: 'Professional meeting' };
 export const PRACTICE_EVENT_STATUS_LABELS: Record<string, string> = { SCHEDULED: 'Scheduled', COMPLETED: 'Completed', CANCELLED: 'Cancelled', NO_SHOW: 'No-show' };
 export const PRACTICE_TEAM_LABELS: Record<string, string> = { RECEPTION: 'Reception', FINANCE: 'Finance' };
+
+export const TALENT_LABELS: Record<string, string> = {
+  PRIVATE: 'Private', RECRUITERS: 'Verified recruiters', PUBLIC: 'Public', PERSONAL: 'Personal hiring', ORGANIZATION: 'Company or institution',
+  DRAFT: 'Draft', PENDING: 'Awaiting verification', VERIFIED: 'Identity verified', SUSPENDED: 'Suspended', REJECTED: 'Rejected',
+  OWNER: 'Owner', ADMIN: 'Administrator', RECRUITER: 'Recruiter', REVIEWER: 'Reviewer', PUBLISHED: 'Published', CLOSED: 'Applications closed', ARCHIVED: 'Archived',
+  FULL_TIME: 'Full time', PART_TIME: 'Part time', CONTRACT: 'Contract', CONSULTANCY: 'Consultancy', INTERNSHIP: 'Internship', VOLUNTEER: 'Volunteer',
+  ONSITE: 'On-site', HYBRID: 'Hybrid', REMOTE: 'Remote', REQUIRED: 'Required', OPTIONAL: 'Optional', HIDDEN: 'Not requested',
+  SUBMITTED: 'Submitted', UNDER_REVIEW: 'Under review', SHORTLISTED: 'Shortlisted', INTERVIEW: 'Interview', OFFERED: 'Offered', HIRED: 'Hired', WITHDRAWN: 'Withdrawn',
+  INVITED: 'Invitation pending', ACCEPTED: 'Accepted', DECLINED: 'Declined', CLEAN: 'Ready', PENDING_UPLOAD: 'Uploading', QUARANTINED: 'Security scan pending', SCANNING: 'Scanning', EXPIRED: 'Expired',
+  SHORT_TEXT: 'Short answer', LONG_TEXT: 'Long answer', YES_NO: 'Yes or no', SINGLE_CHOICE: 'Single choice',
+  HOUR: 'Hour', DAY: 'Day', WEEK: 'Week', MONTH: 'Month', YEAR: 'Year', PROJECT: 'Project',
+};
+export function talentLabel(value: string) { return TALENT_LABELS[value] || value; }

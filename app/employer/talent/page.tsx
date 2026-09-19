@@ -1,8 +1,11 @@
+import { redirect } from 'next/navigation';
+import { talentEnabled, productUrl } from '@/lib/product-hosts';
 export const dynamic = 'force-dynamic';
 
 import { TalentSearch } from '@/components/dashboard/talent-search';
 
 export default function EmployerTalentPage() {
+  if (talentEnabled()) redirect(productUrl('talent', '/talent/people'));
   return (
     <div className="space-y-4">
       <div>

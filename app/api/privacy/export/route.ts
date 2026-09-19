@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { exportTalentData } from '@/lib/talent-retention';
 
 /**
  * Right of access and right to data portability.
@@ -48,6 +49,7 @@ export async function GET(req: NextRequest) {
     note:
       'This file contains the personal data we hold about you. Records you created about your own patients are included because you are their controller; treat this file as confidential.',
     account: safeUser,
+    talent: await exportTalentData(userId),
     recentActivity: auditTrail,
   };
 

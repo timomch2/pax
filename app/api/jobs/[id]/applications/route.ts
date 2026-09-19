@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth';
 import { authorizeUser } from '@/lib/authorization';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { talentEnabled } from '@/lib/product-hosts';
 
 const applySchema = z.object({
   coverLetter: z.string().trim().min(50).max(10_000),
@@ -16,8 +17,9 @@ const applySchema = z.object({
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const job = await prisma.job.findUnique({ where: { id: params.id }, select: { employerId: true } });
+  const job = await prisma.job.findUnique({ where: { id: params.id }, select: { employerId: true, hiringProfileId: true } });
   if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  if (job.hiringProfileId) return NextResponse.json({ error: 'Use the Talent application workspace' }, { status: 409 });
   const isEmployer = job.employerId === session.user.id;
   const allowed = await authorizeUser(session.user.id, 'talent.application.read', isEmployer ? { entityType: 'JobApplication' } : { ownerId: session.user.id, entityType: 'JobApplication' });
   if (!allowed.ok) return NextResponse.json({ error: allowed.error }, { status: allowed.status });
@@ -35,13 +37,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
+  if (talentEnabled()) return NextResponse.json({ error: 'Use the Talent workspace for this action', url: '/talent/hiring' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const allowed = await authorizeUser(session.user.id, 'talent.application.create', { ownerId: session.user.id, entityType: 'JobApplication' });
   if (!allowed.ok) return NextResponse.json({ error: allowed.error }, { status: allowed.status });
   const parsed = applySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Invalid application', issues: parsed.error.flatten().fieldErrors }, { status: 400 });
-  const job = await prisma.job.findFirst({ where: { id: params.id, status: 'PUBLISHED', OR: [{ closesAt: null }, { closesAt: { gt: new Date() } }] } });
+  const job = await prisma.job.findFirst({ where: { id: params.id, hiringProfileId: null, status: 'PUBLISHED', OR: [{ closesAt: null }, { closesAt: { gt: new Date() } }] } });
   if (!job) return NextResponse.json({ error: 'Job is not accepting applications' }, { status: 409 });
   if (job.employerId === session.user.id) return NextResponse.json({ error: 'You cannot apply to your own job' }, { status: 400 });
   if (parsed.data.resumeAssetId) {

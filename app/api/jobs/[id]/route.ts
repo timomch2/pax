@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth';
 import { authorizeUser } from '@/lib/authorization';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { talentEnabled } from '@/lib/product-hosts';
 
 const updateSchema = z.object({
   title: z.string().trim().min(3).max(160).optional(),
@@ -28,16 +29,19 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const job = await prisma.job.findUnique({ where: { id: params.id }, include: { _count: { select: { applications: true } } } });
   if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  if (job.hiringProfileId) return NextResponse.json({ error: 'Use the Talent job page', url: '/talent/jobs/' + job.id }, { status: 409 });
   const allowed = await authorizeUser(session.user.id, 'talent.job.read', job.status === 'PUBLISHED' ? { entityType: 'Job', resourceId: job.id } : { ownerId: job.employerId, entityType: 'Job', resourceId: job.id });
   if (!allowed.ok) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
   return NextResponse.json({ job });
 }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  if (talentEnabled()) return NextResponse.json({ error: 'Use the Talent workspace for this action', url: '/talent/hiring' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const job = await prisma.job.findUnique({ where: { id: params.id } });
   if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  if (job.hiringProfileId) return NextResponse.json({ error: 'Use the Talent job page', url: '/talent/jobs/' + job.id }, { status: 409 });
   const allowed = await authorizeUser(session.user.id, 'talent.job.update', { ownerId: job.employerId, entityType: 'Job', resourceId: job.id });
   if (!allowed.ok) return NextResponse.json({ error: allowed.error }, { status: allowed.status });
   const parsed = updateSchema.safeParse(await request.json().catch(() => null));
@@ -56,10 +60,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  if (talentEnabled()) return NextResponse.json({ error: 'Use the Talent workspace for this action', url: '/talent/hiring' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const job = await prisma.job.findUnique({ where: { id: params.id } });
   if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  if (job.hiringProfileId) return NextResponse.json({ error: 'Use the Talent job page', url: '/talent/jobs/' + job.id }, { status: 409 });
   const allowed = await authorizeUser(session.user.id, 'talent.job.delete', { ownerId: job.employerId, entityType: 'Job', resourceId: job.id });
   if (!allowed.ok) return NextResponse.json({ error: allowed.error }, { status: allowed.status });
   await prisma.job.update({ where: { id: job.id }, data: { status: 'ARCHIVED' } });

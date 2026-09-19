@@ -18,7 +18,8 @@ export async function POST(request: Request) {
   if (!limited.allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { email: true, password: true } });
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { email: true, password: true, mfaEnabled: true } });
+  if (user?.mfaEnabled) return NextResponse.json({ error: 'Disable the current authenticator with its code before replacing it' }, { status: 409 });
   if (!user?.password || !await bcrypt.compare(parsed.data.password, user.password)) return NextResponse.json({ error: 'Verification failed' }, { status: 403 });
 
   const secret = createMfaSecret();
@@ -29,4 +30,3 @@ export async function POST(request: Request) {
   const uri = `otpauth://totp/${encodeURIComponent(`PAX:${user.email}`)}?secret=${secret}&issuer=${encodeURIComponent('PAX')}&algorithm=SHA1&digits=6&period=30`;
   return NextResponse.json({ secret, uri });
 }
-

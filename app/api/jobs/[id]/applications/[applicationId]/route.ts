@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth';
 import { authorizeUser } from '@/lib/authorization';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { talentEnabled } from '@/lib/product-hosts';
 import { enqueueNotification } from '@/lib/notification-service';
 
 const statusSchema = z.object({
@@ -23,10 +24,11 @@ const transitions: Record<string, string[]> = {
 };
 
 export async function PATCH(request: Request, { params }: { params: { id: string; applicationId: string } }) {
+  if (talentEnabled()) return NextResponse.json({ error: 'Use the Talent workspace for this action', url: '/talent/hiring' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const application = await prisma.jobApplication.findFirst({
-    where: { id: params.applicationId, jobId: params.id },
+    where: { job: { hiringProfileId: null }, id: params.applicationId, jobId: params.id },
     include: { job: true, applicant: { select: { id: true, name: true, email: true } } },
   });
   if (!application) return NextResponse.json({ error: 'Application not found' }, { status: 404 });
@@ -62,9 +64,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string; applicationId: string } }) {
+  if (talentEnabled()) return NextResponse.json({ error: 'Use the Talent workspace for this action', url: '/talent/hiring' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const application = await prisma.jobApplication.findFirst({ where: { id: params.applicationId, jobId: params.id, applicantId: session.user.id } });
+  const application = await prisma.jobApplication.findFirst({ where: { job: { hiringProfileId: null }, id: params.applicationId, jobId: params.id, applicantId: session.user.id } });
   if (!application) return NextResponse.json({ error: 'Application not found' }, { status: 404 });
   if (['HIRED', 'REJECTED', 'WITHDRAWN'].includes(application.status)) return NextResponse.json({ error: 'Application cannot be withdrawn' }, { status: 409 });
   const allowed = await authorizeUser(session.user.id, 'talent.application.update', { ownerId: session.user.id, entityType: 'JobApplication', resourceId: application.id });

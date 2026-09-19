@@ -9,6 +9,7 @@ datasource db {
 }
 
 enum UserRole {
+  MEMBER
   STAFF
   PRACTITIONER
   PATIENT
@@ -74,6 +75,7 @@ enum NotificationDeliveryStatus {
 }
 
 enum UploadPurpose {
+  TALENT_DOCUMENT
   PROFILE_IMAGE
   GPS_EVIDENCE
   INNOVATION_EVIDENCE
@@ -484,6 +486,14 @@ model User {
   practiceWorkspace                   PracticeWorkspace?
   practiceMemberships                 PracticeMember[]
   legacyPracticePatients              HubPatient[]                @relation("LegacyPracticePatient")
+  talentProfile                       TalentProfile?
+  talentHiringProfiles                TalentHiringProfile[]
+  talentMemberships                   TalentMember[]
+  talentDrafts                        TalentApplicationDraft[]
+  talentConversations                 TalentConversation[]
+  talentSavedJobs                      TalentSavedJob[]
+  talentSavedSearches                  TalentSavedSearch[]
+  talentBlocks                        TalentBlock[]
 
   @@index([role])
   @@index([tier])
@@ -1925,6 +1935,21 @@ model Job {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   applications     JobApplication[]
+  hiringProfileId  String?
+  hiringProfile    TalentHiringProfile? @relation(fields: [hiringProfileId], references: [id], onDelete: Restrict)
+  version          Int @default(1)
+  requiredSkills   String[] @default([])
+  desirableSkills  String[] @default([])
+  specialty        String?
+  minimumYears     Int?
+  remoteCountries  String[] @default([])
+  salaryPeriod     String?
+  applicationConfig Json @default("{\"cv\":\"REQUIRED\",\"coverLetter\":\"OPTIONAL\",\"documents\":\"OPTIONAL\",\"questions\":[]}")
+  recruitmentClosedAt DateTime?
+  assignments      TalentJobAssignment[]
+  drafts           TalentApplicationDraft[]
+  conversations    TalentConversation[]
+  savedBy          TalentSavedJob[]
 
   @@index([employerId, status])
   @@index([status, publishedAt])
@@ -1945,6 +1970,14 @@ model JobApplication {
   withdrawnAt   DateTime?
   updatedAt     DateTime                    @updatedAt
   statusEvents  JobApplicationStatusEvent[]
+  snapshot      Json?
+  answers       Json?
+  attachmentIds String[] @default([])
+  retainedUntil DateTime?
+  retentionHold Boolean @default(false)
+  holdReason    String?
+  redactedAt    DateTime?
+  notes         TalentApplicationNote[]
 
   @@unique([jobId, applicantId])
   @@index([applicantId, status])
@@ -2775,6 +2808,7 @@ model UploadAsset {
   completedAt         DateTime?
   scannedAt           DateTime?
   retainedUntil       DateTime?
+  contentValidatedAt  DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -2804,4 +2838,224 @@ model UploadAssetAccessLog {
 
   @@index([assetId, createdAt])
   @@index([actorId, createdAt])
+}
+
+enum TalentVisibility {
+  PRIVATE
+  RECRUITERS
+  PUBLIC
+}
+
+enum TalentHiringKind {
+  PERSONAL
+  ORGANIZATION
+}
+
+enum TalentVerification {
+  DRAFT
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum TalentTeamRole {
+  ADMIN
+  RECRUITER
+  REVIEWER
+}
+
+enum TalentConversationStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+}
+
+model TalentProfile {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  headline String @default("")
+  about String @default("") @db.Text
+  location String @default("")
+  country String @default("KE")
+  specialty String @default("")
+  skills String[] @default([])
+  languages String[] @default([])
+  experiences Json @default("[]")
+  education Json @default("[]")
+  credentials Json @default("[]")
+  interests String[] @default([])
+  preferredTypes EmploymentType[] @default([])
+  preferredModes WorkMode[] @default([])
+  preferredCountries String[] @default([])
+  yearsExperience Int @default(0)
+  availability String @default("")
+  visibility TalentVisibility @default(PRIVATE)
+  sharedGpsIds String[] @default([])
+  avatarAssetId String?
+  savedResumeAssetId String?
+  adultConfirmedAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([visibility, specialty])
+}
+
+model TalentHiringProfile {
+  id String @id @default(cuid())
+  ownerId String
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  kind TalentHiringKind
+  slug String @unique
+  name String
+  description String @default("") @db.Text
+  website String?
+  location String @default("")
+  country String @default("KE")
+  logoAssetId String?
+  verification TalentVerification @default(DRAFT)
+  verificationStatement String @default("") @db.Text
+  verificationAssetIds String[] @default([])
+  verificationNote String?
+  reviewedById String?
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members TalentMember[]
+  invitations TalentTeamInvitation[]
+  jobs Job[]
+  blocks TalentBlock[]
+  @@index([ownerId])
+  @@index([verification])
+}
+
+model TalentMember {
+  id String @id @default(cuid())
+  hiringProfileId String
+  hiringProfile TalentHiringProfile @relation(fields: [hiringProfileId], references: [id], onDelete: Restrict)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role TalentTeamRole
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  assignments TalentJobAssignment[]
+  @@unique([hiringProfileId, userId])
+  @@index([userId, revokedAt])
+}
+
+model TalentJobAssignment {
+  jobId String
+  job Job @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  memberId String
+  member TalentMember @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  @@id([jobId, memberId])
+}
+
+model TalentTeamInvitation {
+  id String @id @default(cuid())
+  hiringProfileId String
+  hiringProfile TalentHiringProfile @relation(fields: [hiringProfileId], references: [id], onDelete: Restrict)
+  email String
+  role TalentTeamRole
+  tokenHash String @unique
+  invitedById String
+  expiresAt DateTime
+  acceptedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([hiringProfileId, email])
+}
+
+model TalentApplicationDraft {
+  jobId String
+  job Job @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  content Json
+  updatedAt DateTime @updatedAt
+  @@id([jobId, userId])
+}
+
+model TalentApplicationNote {
+  id String @id @default(cuid())
+  applicationId String
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  actorId String
+  body String @db.Text
+  createdAt DateTime @default(now())
+  @@index([applicationId, createdAt])
+}
+
+model TalentConversation {
+  id String @id @default(cuid())
+  jobId String
+  job Job @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  candidateId String
+  candidate User @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  status TalentConversationStatus @default(INVITED)
+  invitedById String?
+  retainedUntil DateTime?
+  redactedAt DateTime?
+  retentionHold Boolean @default(false)
+  holdReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages TalentMessage[]
+  @@unique([jobId, candidateId])
+  @@index([candidateId, updatedAt])
+}
+
+model TalentMessage {
+  id String @id @default(cuid())
+  conversationId String
+  conversation TalentConversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  senderId String
+  body String @db.Text
+  clientId String
+  createdAt DateTime @default(now())
+  @@unique([conversationId, senderId, clientId])
+  @@index([conversationId, createdAt])
+}
+
+model TalentBlock {
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  hiringProfileId String
+  hiringProfile TalentHiringProfile @relation(fields: [hiringProfileId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@id([userId, hiringProfileId])
+}
+
+model TalentSavedJob {
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  jobId String
+  job Job @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@id([userId, jobId])
+}
+
+model TalentSavedSearch {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  name String
+  filters Json
+  alertsEnabled Boolean @default(false)
+  lastAlertAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+model TalentReport {
+  id String @id @default(cuid())
+  reporterId String
+  targetType String
+  targetId String
+  reason String @db.Text
+  resolution String?
+  resolvedById String?
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([resolvedAt, createdAt])
 }

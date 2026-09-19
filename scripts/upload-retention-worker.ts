@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/db';
 import { deleteFile } from '@/lib/s3';
+import { talentAssetReferenced } from '@/lib/talent-retention';
 
 async function main() {
   const now = new Date();
@@ -12,7 +13,8 @@ async function main() {
     const assets = await prisma.uploadAsset.findMany({ where: { retainedUntil: { lt: now }, status: { in: ['PENDING_UPLOAD', 'REJECTED'] } }, take: 100, orderBy: { retainedUntil: 'asc' } });
     for (const asset of assets) {
       try {
-        if (asset.status !== 'PENDING_UPLOAD') await deleteFile(asset.objectKey).catch(() => undefined);
+        if (['TALENT_RESUME', 'TALENT_DOCUMENT'].includes(asset.purpose) && await talentAssetReferenced(asset.id)) continue;
+        await deleteFile(asset.objectKey);
         await prisma.uploadAsset.update({ where: { id: asset.id }, data: { status: 'EXPIRED', scanResult: 'Retention window elapsed' } });
         processed += 1;
       } catch { failed += 1; }

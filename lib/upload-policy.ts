@@ -13,7 +13,8 @@ export const UPLOAD_POLICIES: Record<UploadPurpose, UploadPolicy> = {
   VERIFICATION_DOCUMENT: { maxBytes: 10 * 1024 * 1024, contentTypes: DOCUMENT_TYPES, extensions: DOCUMENT_EXTENSIONS, retentionDays: 2555 },
   VENDOR_DOCUMENT: { maxBytes: 10 * 1024 * 1024, contentTypes: DOCUMENT_TYPES, extensions: DOCUMENT_EXTENSIONS, retentionDays: 2555 },
   SAFETY_ATTACHMENT: { maxBytes: 10 * 1024 * 1024, contentTypes: DOCUMENT_TYPES, extensions: DOCUMENT_EXTENSIONS, retentionDays: 3650 },
-  TALENT_RESUME: { maxBytes: 10 * 1024 * 1024, contentTypes: DOCUMENT_TYPES, extensions: DOCUMENT_EXTENSIONS, retentionDays: 2555 },
+  TALENT_RESUME: { maxBytes: 10 * 1024 * 1024, contentTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], extensions: ['pdf', 'docx'], retentionDays: 365 },
+  TALENT_DOCUMENT: { maxBytes: 10 * 1024 * 1024, contentTypes: [...DOCUMENT_TYPES, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], extensions: [...DOCUMENT_EXTENSIONS, 'docx'], retentionDays: 365 },
 };
 
 export function validateUploadPolicy(input: { purpose: UploadPurpose; fileName: string; contentType: string; size: number }): string | null {

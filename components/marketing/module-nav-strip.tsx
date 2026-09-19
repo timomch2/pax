@@ -1,5 +1,6 @@
 'use client';
 
+import { ProductSwitcher } from '@/components/product-switcher';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -20,6 +21,7 @@ export function ModuleNavStrip() {
   return (
     <div className="border-t border-black/5 bg-[#F1EEE8]/80 backdrop-blur-md">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
+        <ProductSwitcher />
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-2">
           <span className="text-[10px] font-bold tracking-[1.5px] uppercase text-gray-400 mr-2 flex-shrink-0 hidden sm:block">Modules</span>
           {MODULES.map((m) => {

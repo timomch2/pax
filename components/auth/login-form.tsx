@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,8 @@ export function LoginForm() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/hub';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +28,12 @@ export function LoginForm() {
         password,
         otp: otp || undefined,
         redirect: false,
+        callbackUrl,
       });
       if (result?.error) {
         toast.error('Invalid email or password');
       } else {
-        router.replace('/hub');
+        window.location.assign(result?.url || '/hub');
       }
     } catch {
       toast.error('An error occurred. Please try again.');
@@ -43,7 +45,7 @@ export function LoginForm() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      await signIn('google', { redirect: true, callbackUrl: '/hub' });
+      await signIn('google', { redirect: true, callbackUrl });
     } catch {
       toast.error('An error occurred with Google Sign-In.');
       setGoogleLoading(false);
@@ -120,7 +122,7 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
+        <Link href={callbackUrl.includes('/talent') || callbackUrl.includes('talent.') ? `/talent/register?callbackUrl=${encodeURIComponent(callbackUrl)}` : '/register'} className="font-medium text-primary hover:underline">
           Register here
         </Link>
       </p>

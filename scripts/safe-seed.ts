@@ -23,4 +23,13 @@ try {
 } catch (err: any) {
 }
 
-execSync("tsx --require dotenv/config scripts/seed.ts", { stdio: "inherit" });
+if (process.argv.includes('--talent-only')) {
+  import('../lib/talent-seed').then(async ({ seedTalentFoundation }) => {
+    await seedTalentFoundation();
+    const { prisma } = await import('../lib/db');
+    await prisma.$disconnect();
+    console.log('Talent foundations seeded without changing existing accounts.');
+  }).catch(() => { console.error('Talent foundation seed failed'); process.exitCode = 1; });
+} else {
+  execSync("tsx --require dotenv/config scripts/seed.ts", { stdio: "inherit" });
+}

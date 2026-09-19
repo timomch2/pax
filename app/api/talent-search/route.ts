@@ -5,6 +5,7 @@ import type { Prisma, UserRole } from '@prisma/client';
 import { z } from 'zod';
 import { requirePermission } from '@/lib/authorization';
 import { prisma } from '@/lib/db';
+import { talentEnabled } from '@/lib/product-hosts';
 
 const querySchema = z.object({
   q: z.string().trim().max(120).default(''),
@@ -17,6 +18,7 @@ const querySchema = z.object({
 }).strict();
 
 export async function GET(req: NextRequest) {
+  if (talentEnabled()) { const url = new URL('/api/talent/people', req.url); url.searchParams.set('q', req.nextUrl.searchParams.get('q') || ''); return NextResponse.redirect(url); }
   const allowed = await requirePermission('talent.job.read', { entityType: 'TalentSearch' }, req);
   if (!allowed.ok) return NextResponse.json({ error: allowed.error }, { status: allowed.status });
   try {
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
       ] } : {}),
     };
     const userWhere: Prisma.UserWhereInput = {
-      accountStatus: 'ACTIVE', credibilityScore: { gte: minScore }, ...(role ? { role: role as UserRole } : {}),
+      talentProfile: { is: null }, accountStatus: 'ACTIVE', credibilityScore: { gte: minScore }, ...(role ? { role: role as UserRole } : {}),
       gpsEntries: { some: entryWhere },
       ...(q ? { OR: [
         { name: { contains: q, mode: 'insensitive' } }, { headline: { contains: q, mode: 'insensitive' } },

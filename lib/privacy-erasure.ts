@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/db';
+import { eraseTalentData } from '@/lib/talent-retention';
 
 function erasedIdentity(userId: string) {
   const token = createHash('sha256').update(`pax-erasure:${userId}`).digest('hex').slice(0, 20);
@@ -17,6 +18,7 @@ export async function executeErasureRequest(requestId: string, actorId: string) 
     if (!user) throw new Error('DATA_SUBJECT_NOT_FOUND');
     const identity = erasedIdentity(user.id);
     const now = new Date();
+    const talent = await eraseTalentData(user.id, tx);
 
     // Authentication and discretionary access data have no continuing operational purpose.
     await tx.session.deleteMany({ where: { userId: user.id } });
@@ -38,7 +40,7 @@ export async function executeErasureRequest(requestId: string, actorId: string) 
       where: { userId: user.id },
       data: { physicalAddress: null, city: null, postalCode: null, phone: null, procurementOfficer: 'Deleted member', officerTitle: null, officerEmail: identity.email },
     });
-    await tx.uploadAsset.updateMany({ where: { ownerId: user.id, status: { not: 'REJECTED' } }, data: { status: 'REJECTED', retainedUntil: now, scanResult: 'Erasure request: object scheduled for secure deletion' } });
+    await tx.uploadAsset.updateMany({ where: { ownerId: user.id, id: { notIn: talent.heldAssetIds }, status: { not: 'REJECTED' } }, data: { status: 'REJECTED', retainedUntil: now, scanResult: 'Erasure request: object scheduled for secure deletion' } });
     await tx.notificationDelivery.updateMany({ where: { event: { userId: user.id } }, data: { recipient: identity.email } });
 
     // Financial, clinical, safety, audit, and signed NDA records remain linked to a pseudonymous
@@ -74,6 +76,7 @@ export async function executeErasureRequest(requestId: string, actorId: string) 
       authenticationDeleted: true,
       profileDeidentified: true,
       uploadsScheduledForDeletion: true,
+      talentHeldApplications: talent.heldApplications,
       retainedCategories: ['financial', 'clinical', 'safety', 'audit', 'signed_legal_records'],
     };
     const updated = await tx.dataSubjectRequest.update({

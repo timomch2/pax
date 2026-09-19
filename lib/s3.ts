@@ -112,3 +112,18 @@ export async function deleteFile(cloudStoragePath: string): Promise<void> {
 
   await s3.send(command);
 }
+
+/** Read a bounded private object into memory for document validation; never persist uploads locally. */
+export async function readFileBytes(cloudStoragePath: string, maximumBytes: number): Promise<Buffer> {
+  const { bucketName } = getBucketConfig();
+  const object = await createS3Client().send(new GetObjectCommand({ Bucket: bucketName, Key: cloudStoragePath }));
+  if (!object.Body || (object.ContentLength ?? 0) > maximumBytes) throw new Error('Object is unavailable or too large');
+  const chunks: Buffer[] = [];
+  let length = 0;
+  for await (const chunk of object.Body as AsyncIterable<Uint8Array>) {
+    length += chunk.length;
+    if (length > maximumBytes) throw new Error('Object is too large');
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}

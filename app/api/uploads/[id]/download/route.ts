@@ -7,6 +7,8 @@ import { getFileUrl } from '@/lib/s3';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { authorizeUser } from '@/lib/authorization';
+import { canReadTalentAsset } from '@/lib/talent-documents';
+import { talentEnabled } from '@/lib/product-hosts';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const asset = await prisma.uploadAsset.findUnique({ where: { id: params.id } });
@@ -14,9 +16,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   let auth = await requirePermission('upload.read', { ownerId: asset.ownerId, resourceId: asset.id, entityType: 'UploadAsset' }, request);
+  if (!auth.ok && talentEnabled() && await canReadTalentAsset(session.user.id, asset.id)) auth = { ok: true, userId: session.user.id, scope: 'OWN' };
   if (!auth.ok && asset.purpose === 'TALENT_RESUME') {
     const application = await prisma.jobApplication.findFirst({
-      where: { resumeAssetId: asset.id, job: { employerId: session.user.id } },
+      where: { resumeAssetId: asset.id, job: { employerId: session.user.id, hiringProfileId: null } },
       select: { id: true },
     });
     if (application) {

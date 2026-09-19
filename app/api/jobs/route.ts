@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth';
 import { authorizeUser } from '@/lib/authorization';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { talentEnabled } from '@/lib/product-hosts';
 
 const createJobSchema = z.object({
   title: z.string().trim().min(3).max(160),
@@ -34,6 +35,7 @@ const createJobSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  if (talentEnabled()) return NextResponse.redirect(new URL('/api/talent/jobs' + new URL(request.url).search, request.url));
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const allowed = await authorizeUser(session.user.id, 'talent.job.read', { entityType: 'Job' });
@@ -44,8 +46,8 @@ export async function GET(request: Request) {
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 50);
   const jobs = await prisma.job.findMany({
     where: mine
-      ? { employerId: session.user.id }
-      : { status: 'PUBLISHED', OR: [{ closesAt: null }, { closesAt: { gt: new Date() } }] },
+      ? { employerId: session.user.id, hiringProfileId: null }
+      : { hiringProfileId: null, status: 'PUBLISHED', OR: [{ closesAt: null }, { closesAt: { gt: new Date() } }] },
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -57,6 +59,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (talentEnabled()) return NextResponse.json({ error: 'Use the Talent workspace for this action', url: '/talent/hiring' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const allowed = await authorizeUser(session.user.id, 'talent.job.create', { ownerId: session.user.id, entityType: 'Job' });
