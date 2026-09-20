@@ -43,13 +43,23 @@ export function JobSearch() {
     <div className="space-y-5">
       <Panel title="Find your next health-sector role">
         <TalentForm
+          layout="toolbar"
           defaults={filters}
           submitLabel="Search jobs"
           fields={[
-            { name: "q", label: "Role, organization or keyword" },
-            { name: "country", label: "Country code (optional)" },
+            {
+              name: "q",
+              label: "Role, organization or keyword",
+              className: "xl:col-span-4",
+            },
+            {
+              name: "country",
+              label: "Country code (optional)",
+              className: "xl:col-span-2",
+            },
             {
               name: "workMode",
+              className: "xl:col-span-3",
               label: "Work arrangement",
               type: "select",
               options: [
@@ -59,6 +69,7 @@ export function JobSearch() {
             },
             {
               name: "employmentType",
+              className: "xl:col-span-3",
               label: "Employment type",
               type: "select",
               options: [
@@ -66,10 +77,19 @@ export function JobSearch() {
                 ...options(employmentTypes),
               ],
             },
-            { name: "specialty", label: "Profession or specialty" },
-            { name: "skill", label: "Required skill" },
+            {
+              name: "specialty",
+              label: "Profession or specialty",
+              className: "xl:col-span-4",
+            },
+            {
+              name: "skill",
+              label: "Required skill",
+              className: "xl:col-span-3",
+            },
             {
               name: "sort",
+              className: "xl:col-span-3",
               label: "Sort",
               type: "select",
               options: [

@@ -19,6 +19,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { uploadAsset, type UploadPurposeValue } from "@/lib/client-upload";
 import { talentLabel } from "@/lib/pax-labels";
+import { cn } from "@/lib/utils";
 
 export async function api(
   path: string,
@@ -132,6 +133,7 @@ export type FieldSpec = {
   options?: { value: string; label: string }[];
   required?: boolean;
   hint?: string;
+  className?: string;
 };
 export const options = (values: readonly string[]) =>
   values.map((value) => ({ value, label: talentLabel(value) }));
@@ -141,12 +143,14 @@ export function TalentForm({
   onSave,
   submitLabel = "Save",
   children,
+  layout = "form",
 }: {
   fields: FieldSpec[];
   defaults: Record<string, any>;
   onSave: (values: any) => Promise<unknown>;
   submitLabel?: string;
   children?: React.ReactNode;
+  layout?: "form" | "toolbar";
 }) {
   const shape: Record<string, yup.AnySchema> = {};
   for (const field of fields)
@@ -174,7 +178,13 @@ export function TalentForm({
           }
         })}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div
+          className={
+            layout === "toolbar"
+              ? "grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-12"
+              : "grid gap-4 sm:grid-cols-2"
+          }
+        >
           {fields.map((spec) => (
             <FormField
               key={spec.name}
@@ -182,19 +192,29 @@ export function TalentForm({
               name={spec.name}
               render={({ field }) => (
                 <FormItem
-                  className={
+                  className={cn(
                     spec.type === "textarea" || spec.type === "checkbox"
                       ? "sm:col-span-2"
-                      : ""
-                  }
+                      : "",
+                    layout === "toolbar" && "min-w-0 space-y-1",
+                    spec.className,
+                  )}
                 >
-                  <FormLabel>{spec.label}</FormLabel>
+                  <FormLabel
+                    className={
+                      layout === "toolbar"
+                        ? "text-xs text-muted-foreground"
+                        : undefined
+                    }
+                  >
+                    {spec.label}
+                  </FormLabel>
                   <FormControl>
                     {spec.type === "select" ? (
                       <select
                         {...field}
                         value={String(field.value || "")}
-                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm"
                       >
                         {spec.options?.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -232,11 +252,22 @@ export function TalentForm({
               )}
             />
           ))}
+          {layout === "toolbar" && (
+            <Button
+              type="submit"
+              className="w-full xl:col-span-2"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Searching…" : submitLabel}
+            </Button>
+          )}
         </div>
         {children}
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "Saving…" : submitLabel}
-        </Button>
+        {layout === "form" && (
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Saving…" : submitLabel}
+          </Button>
+        )}
       </form>
     </Form>
   );
