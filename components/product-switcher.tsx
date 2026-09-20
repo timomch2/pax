@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { BriefcaseBusiness, Grip, House, Stethoscope, Store, MessagesSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
+import type { ServiceSummary } from "@/lib/service-enrollment";
+import { serviceFetcher } from "@/components/account/account-services";
 import type { ServiceId } from "@/lib/service-navigation";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
   const { data } = useSWR<ProductsResponse>("/api/products", (url: string) =>
     fetch(url).then((response) => response.json()),
   );
+  const { data: enrollment } = useSWR<{ services: ServiceSummary[] }>(session?.user?.id && variant === "launcher" ? ["/api/account/services", session.user.id!] as const : null, serviceFetcher);
   if (!data || (variant === "launcher" ? !session?.user?.id : !data.enabled)) return null;
 
   if (variant === "launcher") {
@@ -53,10 +56,12 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
           <nav aria-label="PAX services" className="grid grid-cols-3 gap-1">
             {data.services.map((link) => {
               const Icon = SERVICE_ICONS[link.id];
+              const service = enrollment?.services.find(item => item.id === link.id);
+              const href = link.id === "home" || service?.state === "ENABLED" ? link.href : `${data.accountHref}?service=${link.id}#my-services`;
               return (
                 <a
                   key={link.id}
-                  href={link.href}
+                  href={href}
                   onClick={() => setOpen(false)}
                   className="flex flex-col items-center gap-3 rounded-xl px-1 py-4 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:underline focus-visible:outline-none"
                 >
@@ -64,10 +69,12 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   {link.label}
+                  {service && service.state !== "ENABLED" && <span className="text-[10px] font-normal text-muted-foreground">Enable service</span>}
                 </a>
               );
             })}
           </nav>
+          <a className="mt-3 block border-t border-border pt-3 text-center text-sm text-primary hover:underline" href={`${data.accountHref}#my-services`}>Manage my services</a>
         </PopoverContent>
       </Popover>
     );

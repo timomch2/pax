@@ -189,3 +189,14 @@ export const TALENT_LABELS: Record<string, string> = {
   HOUR: 'Hour', DAY: 'Day', WEEK: 'Week', MONTH: 'Month', YEAR: 'Year', PROJECT: 'Project',
 };
 export function talentLabel(value: string) { return TALENT_LABELS[value] || value; }
+
+export const SERVICE_STATE_LABEL: Record<string, string> = {
+  ENABLED: 'Enabled', DISABLED: 'Disabled', NOT_ENABLED: 'Not enabled',
+};
+export const SERVICE_ACCESS_LABEL: Record<string, string> = {
+  ACTIVE: 'Active', SETUP_REQUIRED: 'Setup required', LIMITED: 'Limited access',
+  UNAVAILABLE: 'Unavailable', ACCOUNT_RESTRICTED: 'Account restricted',
+};
+export const SERVICE_SOURCE_LABEL: Record<string, string> = {
+  SELF: 'Chosen by you', LEGACY: 'Existing service account',
+};

@@ -424,6 +424,7 @@ model User {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
+  services                            UserService[]
   accounts                            Account[]
   sessions                            Session[]
   practitionerProfile                 PractitionerProfile?
@@ -3058,4 +3059,52 @@ model TalentReport {
   resolvedAt DateTime?
   createdAt DateTime @default(now())
   @@index([resolvedAt, createdAt])
+}
+
+// Service enrollment is separate from professional roles and billing entitlements.
+enum ServiceKey {
+  practice
+  talent
+  market
+  community
+}
+
+enum ServiceEnrollmentState {
+  ENABLED
+  DISABLED
+}
+
+enum ServiceEnrollmentSource {
+  SELF
+  LEGACY
+}
+
+model UserService {
+  id          String @id @default(cuid())
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  serviceKey  ServiceKey
+  state       ServiceEnrollmentState @default(ENABLED)
+  source      ServiceEnrollmentSource @default(SELF)
+  enabledAt   DateTime @default(now())
+  disabledAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  events      UserServiceEvent[]
+
+  @@unique([userId, serviceKey])
+  @@index([serviceKey, state, userId])
+}
+
+// Append-only enrollment history. Actor is null for the backfill system process.
+model UserServiceEvent {
+  id             String @id @default(cuid())
+  userServiceId  String
+  userService    UserService @relation(fields: [userServiceId], references: [id], onDelete: Restrict)
+  actorId        String?
+  action         String
+  reason         String
+  createdAt      DateTime @default(now())
+
+  @@index([userServiceId, createdAt])
 }

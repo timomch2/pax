@@ -14,9 +14,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Loader2, Search, Trash2, Stethoscope } from 'lucide-react';
 import { toast } from 'sonner';
+import type { ServiceSummary } from '@/lib/service-enrollment';
+import { SERVICE_STATE_LABEL, SERVICE_ACCESS_LABEL } from '@/lib/pax-labels';
 import { ROLE_LABEL, TIER_LABEL } from '@/lib/admin-labels';
 
 interface AdminUser {
+  services: ServiceSummary[];
   id: string; name: string; email: string; role: string; tier: string;
   organization: string | null; paxId: string | null; hubMember: boolean;
   credibilityScore: number; createdAt: string;
@@ -32,6 +35,9 @@ export function AdminUsers() {
   const [q, setQ] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [tierFilter, setTierFilter] = useState('ALL');
+  const [serviceFilter, setServiceFilter] = useState('ALL');
+  const [serviceAccess, setServiceAccess] = useState('ALL');
+  const [serviceState, setServiceState] = useState('ALL');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<AdminUser | null>(null);
 
@@ -41,11 +47,16 @@ export function AdminUsers() {
     if (q.trim()) params.set('q', q.trim());
     if (roleFilter !== 'ALL') params.set('role', roleFilter);
     if (tierFilter !== 'ALL') params.set('tier', tierFilter);
+    if (serviceFilter !== 'ALL') {
+      params.set('service', serviceFilter);
+      if (serviceState !== 'ALL') params.set('serviceState', serviceState);
+      if (serviceAccess !== 'ALL') params.set('serviceAccess', serviceAccess);
+    }
     fetch(`/api/admin/users?${params.toString()}`)
       .then((r) => r.json())
       .then((d) => { if (!d.error) setUsers(d.users); })
       .finally(() => setLoading(false));
-  }, [q, roleFilter, tierFilter]);
+  }, [q, roleFilter, tierFilter, serviceFilter, serviceState, serviceAccess]);
 
   useEffect(() => {
     const t = setTimeout(load, 300);
@@ -109,6 +120,22 @@ export function AdminUsers() {
         </Select>
       </div>
 
+      <div className="flex flex-wrap gap-3">
+        <Select value={serviceFilter} onValueChange={setServiceFilter}>
+          <SelectTrigger className="w-48" aria-label="Filter by service"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="ALL">All services</SelectItem><SelectItem value="practice">Practitioner</SelectItem><SelectItem value="talent">Talent Search</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="community">Pax Exchange</SelectItem></SelectContent>
+        </Select>
+        <Select value={serviceState} onValueChange={setServiceState} disabled={serviceFilter === 'ALL'}>
+          <SelectTrigger className="w-48" aria-label="Filter by service state"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="ALL">Any enrollment</SelectItem>{Object.entries(SERVICE_STATE_LABEL).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+
+      <Select value={serviceAccess} onValueChange={setServiceAccess} disabled={serviceFilter === 'ALL'}>
+        <SelectTrigger className="w-56" aria-label="Filter by workspace access"><SelectValue /></SelectTrigger>
+        <SelectContent><SelectItem value="ALL">Any workspace access</SelectItem>{Object.entries(SERVICE_ACCESS_LABEL).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent>
+      </Select>
+
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : users.length === 0 ? (
@@ -152,6 +179,15 @@ export function AdminUsers() {
                   </Button>
                 </div>
               </div>
+              <details className="mt-3 border-t border-border pt-3 text-sm">
+                <summary className="cursor-pointer text-primary">Services ({u.services?.filter(service => service.state === 'ENABLED').length ?? 0} enabled)</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">{u.services?.map(service => <div key={service.id} className="rounded-lg bg-muted/50 p-3">
+                  <p className="font-medium">{service.label} · {SERVICE_STATE_LABEL[service.state]}</p>
+                  <p className="text-xs text-muted-foreground">Workspace: {SERVICE_ACCESS_LABEL[service.access]} · Existing access rules</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{service.reason}</p>
+                  {service.source && <p className="mt-1 text-xs">Enrollment: {service.source === 'SELF' ? 'Account owner' : 'Existing service records'}</p>}
+                </div>)}</div>
+              </details>
             </Card>
           ))}
         </div>

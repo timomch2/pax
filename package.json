@@ -14,7 +14,8 @@
     "uploads:retention": "tsx --require dotenv/config scripts/upload-retention-worker.ts",
     "privacy:retention": "tsx --require dotenv/config scripts/privacy-retention-worker.ts",
     "practice:reminders": "tsx --require dotenv/config scripts/practice-reminder-worker.ts",
-    "practice:facilities": "tsx --require dotenv/config scripts/practice-facility-import.ts"
+    "practice:facilities": "tsx --require dotenv/config scripts/practice-facility-import.ts",
+    "services:backfill": "tsx scripts/backfill-service-enrollment.ts"
   },
   "prisma": {
     "seed": "tsx --require dotenv/config scripts/safe-seed.ts"

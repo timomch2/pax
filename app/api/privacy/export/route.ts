@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
+      services: { include: { events: { orderBy: { createdAt: 'asc' } } } },
       practitionerProfile: true,
       consentRecords: true,
       notifications: true,
