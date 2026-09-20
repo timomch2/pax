@@ -55,10 +55,9 @@ export function AppShell({
           >
             <PanelLeft className="h-5 w-5" />
           </Button>
-          {header}
+          <div className="min-w-0 flex-1">{header}</div>
+          <ProductSwitcher variant="launcher" />
         </header>
-
-        <div className="px-4 sm:px-6"><ProductSwitcher /></div>
 
         {/* Content */}
         <main className={cn('p-4 sm:p-6 lg:p-8', className)}>
