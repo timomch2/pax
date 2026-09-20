@@ -95,7 +95,7 @@ export async function startBooking(slug: string, raw: unknown, origin: string) {
     assertPractice(slot, 409, 'This slot is no longer available');
     const token = randomBytes(32).toString('hex');
     const booking = await tx.practiceBookingRequest.create({ data: { ...body, startsAt: slot.startsAt, endsAt: slot.endsAt, workspaceId: workspace.id, tokenHash: practiceTokenHash(token), tokenExpiresAt: new Date(Date.now() + 1800000) } });
-    const queued = await enqueueNotification(tx, { recipient: body.email, templateSlug: 'practice.booking-verification', variables: { verificationUrl: `${origin}/book/${slug}#${token}` }, idempotencyKey: `practice:verify:${booking.id}` });
+    const queued = await enqueueNotification(tx, { recipient: body.email, templateSlug: 'practice.booking-verification', variables: { verificationUrl: `${origin}/practice/book/${slug}#${token}` }, idempotencyKey: `practice:verify:${booking.id}` });
     return { status: 'VERIFICATION_REQUIRED', deliveryStatus: queued.status };
   });
 }
@@ -112,7 +112,7 @@ async function createApprovedEvent(tx: Db, booking: { id: string; workspaceId: s
 }
 
 async function bookingUpdate(tx: Db, booking: { id: string; email: string; version: number; startsAt: Date }, slug: string, origin: string, message: string, token?: string) {
-  return enqueueNotification(tx, { recipient: booking.email, templateSlug: 'practice.booking-update', variables: { message, time: booking.startsAt.toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' }), actionUrl: `${origin}/book/${slug}${token ? `#${token}` : ''}` }, idempotencyKey: `practice:booking:${booking.id}:${booking.version}` });
+  return enqueueNotification(tx, { recipient: booking.email, templateSlug: 'practice.booking-update', variables: { message, time: booking.startsAt.toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' }), actionUrl: `${origin}/practice/book/${slug}${token ? `#${token}` : ''}` }, idempotencyKey: `practice:booking:${booking.id}:${booking.version}` });
 }
 
 export async function confirmBookingToken(slug: string, raw: unknown, origin: string) {

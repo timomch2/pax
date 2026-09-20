@@ -20,6 +20,8 @@ export function legacyPracticeRedirect(path: string): string | null {
     '/dashboard/billing': '/practice/billing',
   };
   if (routes[path]) return routes[path];
+  if (path.startsWith('/dashboard/practice/')) return path.replace('/dashboard/practice', '/practice');
+  if (/^\/book\/[^/]+$/.test(path)) return `/practice${path}`;
   if (path === '/dashboard/hub' || path.startsWith('/dashboard/hub/')) return path.replace('/dashboard/hub', '/practice/finance');
   return null;
 }

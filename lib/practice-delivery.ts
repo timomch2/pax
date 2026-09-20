@@ -1,3 +1,4 @@
+import { productOrigins, productRoutingEnabled } from '@/lib/product-hosts';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { enqueueNotification } from '@/lib/notification-service';
@@ -12,9 +13,9 @@ const timeText = (value: Date) => value.toLocaleString('en-KE', { timeZone: 'Afr
 export async function queueCalendarMessage(tx: Db, eventId: string, message: string, requestOrigin?: string) {
   const event = await tx.practiceEvent.findUniqueOrThrow({ where: { id: eventId }, include: { patient: true, workspace: true } });
   if (!event.patient?.email) return;
-  const origin = requestOrigin ?? process.env.NEXTAUTH_URL;
+  const origin = (productRoutingEnabled() ? productOrigins().practice : requestOrigin ?? process.env.NEXTAUTH_URL);
   if (!origin) throw new Error('Application URL is not configured');
-  await enqueueNotification(tx, { recipient: event.patient.email, templateSlug: 'practice.booking-update', variables: { message, time: timeText(event.startsAt), actionUrl: `${new URL(origin).origin}/book/${event.workspace.bookingSlug}` }, idempotencyKey: `practice:calendar:${event.id}:${event.version}` });
+  await enqueueNotification(tx, { recipient: event.patient.email, templateSlug: 'practice.booking-update', variables: { message, time: timeText(event.startsAt), actionUrl: `${new URL(origin).origin}/practice/book/${event.workspace.bookingSlug}` }, idempotencyKey: `practice:calendar:${event.id}:${event.version}` });
 }
 
 /** Re-read mutable state immediately before delivery, including each retry. */
@@ -62,7 +63,7 @@ export async function practiceDeliveryAllowed(key: string, recipient: string): P
 /** A bounded scan; callers continue using the returned cursor. Outbox keys make repeated scans safe. */
 export async function queuePracticeReminders(after?: string) {
   if (process.env.PRACTICE_WORKSPACE_ENABLED !== 'true') return { queued: 0, nextCursor: null };
-  const origin = process.env.NEXTAUTH_URL;
+  const origin = productRoutingEnabled() ? productOrigins().practice : process.env.NEXTAUTH_URL;
   if (!origin) throw new Error('Application URL is not configured');
   const workspaces = await prisma.practiceWorkspace.findMany({ include: { owner: true }, orderBy: { id: 'asc' }, take: 10, ...(after ? { cursor: { id: after }, skip: 1 } : {}) });
   let queued = 0;
@@ -75,7 +76,7 @@ export async function queuePracticeReminders(after?: string) {
     for (const event of events) {
       const booking = await prisma.practiceBookingRequest.findUnique({ where: { eventId: event.id } });
       if (booking?.remindersEnabled === false) continue;
-      await enqueueNotification(prisma, { recipient: event.patient!.email!, templateSlug: 'practice.appointment-reminder', variables: { time: timeText(event.startsAt), actionUrl: `${new URL(origin).origin}/book/${workspace.bookingSlug}` }, idempotencyKey: `practice:reminder:${event.id}:${event.version}` }); queued++;
+      await enqueueNotification(prisma, { recipient: event.patient!.email!, templateSlug: 'practice.appointment-reminder', variables: { time: timeText(event.startsAt), actionUrl: `${new URL(origin).origin}/practice/book/${workspace.bookingSlug}` }, idempotencyKey: `practice:reminder:${event.id}:${event.version}` }); queued++;
     }
     for (const day of [...new Set(workspace.overdueReminderDays)]) {
       const lines = await prisma.practiceInvoicePayer.findMany({ where: { invoice: { workspaceId: workspace.id, status: 'ISSUED' }, payer: { email: { not: null }, remindersEnabled: true }, dueAt: { gt: new Date(now.getTime() - (day + 1) * 86400000), lte: new Date(now.getTime() - day * 86400000) } }, include: { invoice: true, payer: true } });

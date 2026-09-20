@@ -37,7 +37,7 @@ The approved plan in task 01a07b01-22a6-7fc3-a2a1-d5d4d6bf2700 is the scope. Imp
 ## Operations and defaults
 
 - `PRACTICE_WORKSPACE_ENABLED=false` by default. Set true only in an environment prepared for the expanded schema and release checks.
-- Admin facility screen: `/admin/facilities`. Workspace: `/dashboard/practice`. Public patient link: `/book/<workspace booking slug>`. Staff acceptance: `/practice/invitation#<single-use token>`.
+- Admin facility screen: `/admin/facilities`. Workspace: `/practice`. Public patient link: `/practice/book/<workspace booking slug>`. Former dashboard and booking paths redirect to these canonical URLs. Staff acceptance: `/practice/invitation#<single-use token>`.
 - An administrator starts imports. The CLI continues an existing admin-triggered run: `yarn practice:facilities <run-id>`. `--local-rehearsal` is guarded to the isolated test database only; `--native-https` is also available to the CLI.
 - `yarn notifications:work` scans practice reminders/retainers when enabled and processes the existing outbox. `yarn practice:reminders` runs the scan separately. Schedule frequently enough for the selected reminder window; do not run overlapping external legacy reminders for migrated workspaces.
 - Recurrence horizon: one year, up to 366 occurrences. Imported legacy appointments use an explicit 30-minute duration because the original model did not store duration. Closed history is preserved.

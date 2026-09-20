@@ -14,8 +14,12 @@ export function productOrigins(): Record<PaxProduct, string> {
     main: `https://${root}`,
     accounts: `https://accounts.${root}`,
     talent: `https://talent.${root}`,
-    practice: `https://practitioners.${root}`,
+    practice: `https://${root}`,
   };
+}
+/** Accept the former host only for compatibility redirects and old sign-in returns. */
+export function legacyPracticeOrigin() {
+  return productOrigins().main.replace('https://', 'https://practitioners.');
 }
 export function productUrl(product: PaxProduct, path = "/") {
   return productRoutingEnabled() ? `${productOrigins()[product]}${path}` : path;
@@ -32,6 +36,13 @@ export function safeReturnUrl(
   ).href;
   try {
     const url = new URL(value || fallback, baseUrl);
+    if (url.username || url.password) return fallbackUrl;
+    if (productRoutingEnabled() && url.origin === legacyPracticeOrigin()) {
+      const canonical = new URL(url.pathname === '/' ? '/practice' : url.pathname, productOrigins().practice);
+      canonical.search = url.search;
+      canonical.hash = url.hash;
+      return safeReturnUrl(canonical.href, baseUrl, fallback, allowSignIn);
+    }
     const origins = productRoutingEnabled()
       ? Object.values(productOrigins())
       : [new URL(baseUrl).origin];

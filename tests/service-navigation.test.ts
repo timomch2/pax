@@ -16,7 +16,7 @@ test('service links follow deployment origins and select the current service pro
     ]);
     for (const [path, expected] of [['/practice/accounts', 'practice'], ['/talent/profile', 'talent'], ['/marketplace/vendor', 'market'], ['/community/profile', 'community'], ['/knowledge/example', 'community'], ['/marketplace-other', 'home']]) assert.equal(serviceForPath(path), expected);
     process.env.PAX_PRODUCT_ROUTING_ENABLED = 'true';
-    assert.match(serviceLinks().find(item => item.id === 'practice')!.href, /^https:\/\/practitioners\.[^/]+\/practice$/);
+    assert.equal(serviceLinks().find(item => item.id === 'practice')!.href, serviceLinks()[0].href.replace(/\/$/, '') + '/practice');
   } finally { if (previous === undefined) delete process.env.PAX_PRODUCT_ROUTING_ENABLED; else process.env.PAX_PRODUCT_ROUTING_ENABLED = previous; }
 });
 
@@ -67,4 +67,28 @@ test('service profile allowlists reject ownership, verification and cross-servic
   assert.equal(practiceProfileSchema.safeParse({ ...practice, consultationRate: '-1' }).success, false);
   assert.equal(practiceProfileSchema.safeParse({ ...practice, medicalRegNumber: 'changed' }).success, false);
   assert.equal(vendorContactSchema.safeParse({ contactPerson: 'Contact', contactEmail: 'contact@example.test', contactPhone: '+254700000000', status: 'APPROVED' }).success, false);
+});
+
+test('Practice uses the root domain without taking over the public homepage', async () => {
+  const previous = process.env.PAX_PRODUCT_ROUTING_ENABLED;
+  process.env.PAX_PRODUCT_ROUTING_ENABLED = 'true';
+  try {
+    const { productOrigins, legacyPracticeOrigin, safeReturnUrl } = await import('@/lib/product-hosts');
+    const origins = productOrigins();
+    const request = (url: string) => middleware(new NextRequest(url, { headers: { host: new URL(url).host } }));
+    assert.equal((await request(origins.main + '/')).status, 200);
+    for (const [source, target] of [
+      [legacyPracticeOrigin() + '/', origins.main + '/practice'],
+      [legacyPracticeOrigin() + '/dashboard/practice?workspace=abc', origins.main + '/practice?workspace=abc'],
+      [origins.talent + '/practice/calendar?workspace=abc', origins.main + '/practice/calendar?workspace=abc'],
+      [origins.main + '/book/example?date=tomorrow', origins.main + '/practice/book/example?date=tomorrow'],
+    ]) assert.equal((await request(source)).headers.get('location'), target);
+    for (const path of ['/practice/invitation', '/practice/book/example']) assert.equal((await request(origins.main + path)).status, 200);
+    const login = new URL((await request(origins.main + '/practice/accounts?workspace=abc')).headers.get('location')!);
+    assert.equal(login.origin, origins.accounts);
+    assert.equal(login.searchParams.get('callbackUrl'), origins.main + '/practice/accounts?workspace=abc');
+    assert.equal(safeReturnUrl(legacyPracticeOrigin() + '/practice/book/example#token', origins.accounts), origins.main + '/practice/book/example#token');
+    assert.equal(safeReturnUrl(legacyPracticeOrigin().replace('https://', 'https://user@') + '/practice', origins.accounts), origins.accounts + '/hub');
+    assert.equal((await request('https://unknown.example/practice')).status, 400);
+  } finally { if (previous === undefined) delete process.env.PAX_PRODUCT_ROUTING_ENABLED; else process.env.PAX_PRODUCT_ROUTING_ENABLED = previous; }
 });

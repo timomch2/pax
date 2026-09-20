@@ -41,7 +41,7 @@ export function PracticeBookings({ workspaceId, capabilities }: { workspaceId: s
   if (!data) return <p>Loading booking requests…</p>;
   return <div className="space-y-6">
     <Card><CardHeader><CardTitle>Booking requests</CardTitle></CardHeader><CardContent className="space-y-4">
-      <p>Public link: <a className="underline" href={`/book/${data.workspace.bookingSlug}`} target="_blank" rel="noreferrer">Open patient booking page</a> · {data.workspace.bookingEnabled ? 'Enabled' : 'Paused'}</p>
+      <p>Public link: <a className="underline" href={`/practice/book/${data.workspace.bookingSlug}`} target="_blank" rel="noreferrer">Open patient booking page</a> · {data.workspace.bookingEnabled ? 'Enabled' : 'Paused'}</p>
       {!data.requests.length && <p>No requests awaiting review.</p>}
       {data.requests.map((r: any) => <div key={r.id} className="rounded-md bg-muted/40 p-4"><strong>{r.name}</strong><p>{displayTime(r.startsAt)} · {r.status.toLowerCase()}</p><p><span suppressHydrationWarning>{r.email}</span> · <span suppressHydrationWarning>{r.phone}</span></p>{r.proposedStartsAt && <p>Proposed: {displayTime(r.proposedStartsAt)}</p>}{canManage && <Button variant="outline" onClick={() => { setSelected(r); setMatches([]); }}>Review request</Button>}</div>)}
       {data.nextCursor && <Button variant="outline" onClick={() => setCursor(data.nextCursor)}>More requests</Button>}{cursor && <Button variant="outline" onClick={() => setCursor('')}>First page</Button>}

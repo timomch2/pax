@@ -10,14 +10,14 @@ One Next.js 14 application, one PostgreSQL identity, and independently authorize
 | --- | --- |
 | `domanname.com` | Main PAX platform and existing modules |
 | `accounts.domanname.com` | Registration, login, verification, recovery and account security |
-| `practitioners.domanname.com` | Existing Practice workspace |
+| `domanname.com/practice/*` | Practice workspace, profile and public bookings |
 | `talent.domanname.com` | Health-sector jobs, career profiles and hiring |
 
 `TALENT_ENABLED` enables the new workflows. `PAX_PRODUCT_ROUTING_ENABLED` enables host validation, root routing, accounts-host sign-in and the shared cookie. Both default off. Without product routing, Talent is available under `/talent` on the existing host. `PAX_ROOT_DOMAIN` configures the root without putting deployment configuration in client bundles.
 
 Authentication retains NextAuth 4, Google and credentials with the existing password/MFA controls. The browser receives an encrypted JWT in `__Secure-pax.session-token`: HttpOnly, Secure, SameSite=Lax, path `/`, domain `domanname.com`. Tokens are not exposed through localStorage. Sessions have an eight-hour absolute limit. Every server session evaluation refreshes account status, session version and authorization state from PostgreSQL; suspension and global logout revoke access. The accounts screen supports password recovery, authenticator setup, recovery codes and global logout. Google-only users manage second-factor protection with Google.
 
-This shared-cookie architecture requires every subdomain to remain trusted and controlled by PAX. It is not a general third-party SSO provider. A future independently hosted or untrusted product should use an OIDC authorization-code exchange instead. Redirects allow only the four explicit origins; Talent mutations require the browser Origin to match the configured request host, including behind an HTTPS reverse proxy.
+This shared-cookie architecture requires every subdomain to remain trusted and controlled by PAX. It is not a general third-party SSO provider. A future independently hosted or untrusted product should use an OIDC authorization-code exchange instead. Redirects allow only the explicit product origins, with the former practitioner origin normalized to the main domain; Talent mutations require the browser Origin to match the configured request host, including behind an HTTPS reverse proxy.
 
 New Talent registrations receive MEMBER permissions only. Career-profile enrollment adds only MEMBER permissions to an existing account. It never grants practitioner, patient, clinical, finance, safety or administrative access. The existing product modules and role grants remain authoritative.
 

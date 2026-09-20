@@ -1,14 +1,18 @@
 import 'dotenv/config';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'crypto';
-import { mkdir } from 'fs/promises';
+import { mkdir, readFile } from 'fs/promises';
+import https from 'node:https';
+import http from 'node:http';
 import bcrypt from 'bcryptjs';
 import { chromium, expect, type Page } from '@playwright/test';
 import { prisma } from '@/lib/db';
+import { PERMISSIONS } from '@/lib/permissions';
 
 const database = new URL(process.env.DATABASE_URL ?? '');
 assert.equal(database.pathname, '/pax_practice_test'); assert.ok(['127.0.0.1', 'localhost'].includes(database.hostname));
-const origin = 'http://127.0.0.1:3001';
+const origin = 'https://domanname.com';
+const accounts = 'https://accounts.domanname.com';
 const evidence = '/tmp/pax-practice-runtime';
 const localTime = (d: Date) => new Date(d.getTime() + 10800000).toISOString().slice(0, 16);
 const dateIn = (days: number) => new Date(Date.now() + days * 86400000 + 10800000).toISOString().slice(0, 10);
@@ -18,15 +22,72 @@ async function main() {
   const suffix = randomUUID(), password = `Local-${randomBytes(24).toString('base64url')}!`, hash = await bcrypt.hash(password, 12);
   const makeUser = (name: string, role: 'PRACTITIONER' | 'STAFF') => prisma.user.create({ data: { name, role, email: `${name.replace(/ /g, '-').toLowerCase()}-${suffix}@example.test`, password: hash, emailVerified: new Date(), hubMember: role === 'PRACTITIONER', tier: role === 'PRACTITIONER' ? 'TIER2_PROFESSIONAL' : 'TIER1_BASIC' } });
   const owner = await makeUser('Runtime Practitioner', 'PRACTITIONER'), reception = await makeUser('Runtime Reception', 'STAFF'), finance = await makeUser('Runtime Finance', 'STAFF');
+  const legacy = await makeUser('Runtime Legacy Practitioner', 'PRACTITIONER');
+  for (const [key, resource, action] of PERMISSIONS.filter(([key]) => ['hub.patient.read', 'hub.appointment.read', 'hub.invoice.read', 'hub.insurer.read', 'profile.read', 'profile.update'].includes(key))) {
+    const permission = await prisma.permission.upsert({ where: { key }, create: { key, resource, action }, update: {} });
+    await prisma.userPermission.createMany({ data: [owner, legacy].map(user => ({ userId: user.id, permissionId: permission.id, scope: 'OWN' as const })) });
+  }
+  const legacyInvoice = await prisma.invoice.create({ data: { practitionerId: legacy.id, invoiceNumber: `ROUTE-${suffix}`, patientName: 'Synthetic legacy patient', serviceDesc: 'Legacy route verification', totalAmount: 100 } });
   const workspace = await prisma.practiceWorkspace.create({ data: { ownerId: owner.id } });
   await prisma.practiceMember.createMany({ data: [{ workspaceId: workspace.id, userId: reception.id, roles: ['RECEPTION'] }, { workspaceId: workspace.id, userId: finance.id, roles: ['FINANCE'] }] });
-  const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+  const proxy = https.createServer(
+    {
+      key: await readFile("/tmp/pax-talent-local-key.pem"),
+      cert: await readFile("/tmp/pax-talent-local-cert.pem"),
+    },
+    (request, response) => {
+      const upstream = http.request(
+        {
+          hostname: "127.0.0.1",
+          port: 3001,
+          path: request.url,
+          method: request.method,
+          headers: {
+            ...request.headers,
+            "x-forwarded-proto": "https",
+            "x-forwarded-host": request.headers.host,
+          },
+        },
+        (incoming) => {
+          response.writeHead(incoming.statusCode || 502, incoming.headers);
+          incoming.pipe(response);
+        },
+      );
+      upstream.on("error", () => {
+        if (!response.headersSent) response.writeHead(502);
+        response.end();
+      });
+      request.pipe(upstream);
+    },
+  );
+  await new Promise<void>((resolve) =>
+    proxy.listen(8443, "127.0.0.1", resolve),
+  );
+  const browser = await chromium.launch({
+    executablePath:
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    headless: true,
+    args: [
+      "--no-proxy-server",
+      "--host-resolver-rules=MAP *.domanname.com 127.0.0.1:8443, MAP domanname.com 127.0.0.1:8443",
+    ],
+  });
   const failures: string[] = [];
-  const login = async (user: typeof owner, mobile = false) => {
-    const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1365, height: 1000 } });
+  // APIRequestContext does not inherit Chromium's local DNS mapping.
+  const get = async (page: Page, url: string, options = {}) => {
+    const target = new URL(url);
+    const cookies = await page.context().cookies(url);
+    return page.request.get(`https://127.0.0.1:8443${target.pathname}${target.search}`, {
+      maxRedirects: 0, ...options,
+      headers: { host: target.host, cookie: cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ') },
+    });
+  };
+
+  const login = async (user: typeof owner, mobile = false, hasWorkspace = true) => {
+    const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: mobile ? { width: 390, height: 844 } : { width: 1365, height: 1000 } });
     const page = await context.newPage();
     page.on('pageerror', (error) => failures.push(error.message));
-    await page.goto(`${origin}/login`);
+    await page.goto(`${accounts}/login?callbackUrl=${encodeURIComponent(`${origin}/practice`)}`);
     await page.waitForLoadState('networkidle');
     await page.getByLabel('Email', { exact: true }).fill(user.email);
     await page.getByLabel('Password', { exact: true }).fill(password);
@@ -35,15 +96,28 @@ async function main() {
     const authResponse = await (await responsePromise).json();
     const returned = new URL(authResponse.url, origin);
     assert.ok(!returned.searchParams.has('csrf') && !returned.searchParams.has('error'), `Sign-in failed: ${returned.searchParams.has('csrf') ? 'CSRF validation' : returned.searchParams.get('error')}`);
-    await page.waitForURL(/\/dashboard/, { timeout: 30000 });
+    await page.waitForURL(/\/practice/, { timeout: 30000 });
     await page.goto(`${origin}/dashboard/practice`);
-    await expect(page.getByRole('heading', { name: 'Practice Workspace', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Facilities', exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Practice Workspace', exact: true })).toBeVisible();
+    if (hasWorkspace) await expect(page.getByRole('tab', { name: 'Facilities', exact: true })).toBeVisible();
     console.log(`Signed in synthetic ${user.role} account for ${mobile ? 'mobile' : 'desktop'} acceptance.`);
     return page;
   };
   try {
     const page = await login(owner);
+    for (const path of ['/practice', '/practice/patients', '/practice/calendar', '/practice/bookings', '/practice/billing', '/practice/accounts', '/practice/reports', '/practice/team', '/practice/reconciliation', '/practice/profile', '/practice/finance', '/practice/finance/invoices', '/practice/finance/patients', '/practice/finance/insurers']) {
+      const response = await page.goto(`${origin}${path}`);
+      assert.equal(response?.status(), 200, `Route unavailable: ${path}`);
+    }
+    for (const [oldPath, newPath] of [['/dashboard/practice', '/practice'], ['/dashboard/calendar', '/practice/calendar'], ['/dashboard/patients', '/practice/patients'], ['/dashboard/billing', '/practice/billing'], ['/dashboard/hub/invoices', '/practice/finance/invoices']]) {
+      const response = await get(page, `${origin}${oldPath}?workspace=${workspace.id}`, { maxRedirects: 0 });
+      assert.equal(response.status(), 307);
+      assert.equal(response.headers().location, `${origin}${newPath}?workspace=${workspace.id}`);
+    }
+    await page.goto(`https://practitioners.domanname.com/dashboard/practice?workspace=${workspace.id}`);
+    await expect(page).toHaveURL(`${origin}/practice?workspace=${workspace.id}`);
+    assert.equal((await get(page, `${origin}/practice/nonexistent`)).status(), 404);
+
     await page.getByRole('tab', { name: 'Team', exact: true }).click();
     const invitedEmail = `invited-${suffix}@example.test`;
     await page.getByLabel('Staff email').fill(invitedEmail);
@@ -53,7 +127,7 @@ async function main() {
     const invitation = await prisma.practiceInvitation.findFirstOrThrow({ where: { email: invitedEmail } });
     const invitationNotice = await prisma.notificationEvent.findUniqueOrThrow({ where: { idempotencyKey: `practice:invite:${invitation.id}` } });
     const invitationToken = String((invitationNotice.variables as any).invitationUrl).split('#')[1];
-    const invitedContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const invitedContext = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 390, height: 844 } });
     const invitationPage = await invitedContext.newPage();
     await invitationPage.goto(`${origin}/practice/invitation#${invitationToken}`);
     await invitationPage.getByLabel('Your name').fill('Invited Runtime Staff');
@@ -63,7 +137,7 @@ async function main() {
     const invitedUser = await prisma.user.findUniqueOrThrow({ where: { email: invitedEmail } });
     const combinedPage = await login(invitedUser, true);
     await expect(combinedPage.getByRole('tab', { name: 'Calendar', exact: true })).toBeVisible();
-    await expect(combinedPage.getByRole('tab', { name: 'Finance', exact: true })).toBeVisible();
+    await expect(combinedPage.getByRole('tab', { name: 'Billing', exact: true })).toBeVisible();
     await expect(combinedPage.getByRole('tab', { name: 'Team', exact: true })).toHaveCount(0);
     await page.getByRole('tab', { name: 'Facilities', exact: true }).click();
     const facilityName = `Runtime Health Facility ${suffix}`;
@@ -106,7 +180,7 @@ async function main() {
     await page.getByRole('button', { name: 'Complete', exact: true }).click();
     await expect(page.getByText('Patient appointment · Completed', { exact: false })).toBeVisible();
     await page.screenshot({ path: `${evidence}/practitioner-calendar.png`, fullPage: true });
-    await page.getByRole('tab', { name: 'Finance', exact: true }).click();
+    await page.getByRole('tab', { name: 'Billing', exact: true }).click();
     await page.getByRole('tab', { name: 'Payers', exact: true }).click();
     await page.getByLabel('Payer type').selectOption('PATIENT');
     await page.getByLabel(/^Patient(?: \*)?$/).selectOption(patient.id);
@@ -124,7 +198,7 @@ async function main() {
     const financePage = await login(finance, true);
     await expect(financePage.getByRole('tab', { name: 'Calendar', exact: true })).toHaveCount(0);
     await expect(financePage.getByRole('tab', { name: 'Team', exact: true })).toHaveCount(0);
-    await financePage.getByRole('tab', { name: 'Finance', exact: true }).click();
+    await financePage.getByRole('tab', { name: 'Billing', exact: true }).click();
     await financePage.getByRole('tab', { name: 'Receipts and credit', exact: true }).click();
     const payer = await prisma.practicePayer.findFirstOrThrow({ where: { workspaceId: workspace.id, patientId: patient.id } });
     await financePage.getByRole('combobox', { name: 'Payer', exact: true }).selectOption(payer.id);
@@ -137,7 +211,7 @@ async function main() {
     await expect(financePage.getByText(/KSh 100.00 available credit/)).toBeVisible();
     await financePage.evaluate(() => window.scrollTo(0, 0));
     await financePage.screenshot({ path: `${evidence}/finance-mobile.png`, fullPage: true });
-    assert.equal((await financePage.request.get(`${origin}/api/practice/${workspace.id}/calendar?from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 86400000).toISOString())}`)).status(), 403);
+    assert.equal((await get(financePage, `${origin}/api/practice/${workspace.id}/calendar?from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 86400000).toISOString())}`)).status(), 403);
     await financePage.getByRole('tab', { name: 'Reports', exact: true }).click();
     await financePage.getByLabel('From date').fill(dateIn(-1));
     await financePage.getByLabel('Through date').fill(dateIn(1));
@@ -145,10 +219,10 @@ async function main() {
     await expect(financePage.getByText('Account statement', { exact: true })).toBeVisible();
     const reportDownload = financePage.waitForEvent('download'); await financePage.getByRole('link', { name: 'Download PDF' }).click(); await (await reportDownload).saveAs(`${evidence}/statement.pdf`);
     const receptionPage = await login(reception, true);
-    await expect(receptionPage.getByRole('tab', { name: 'Finance', exact: true })).toHaveCount(0);
+    await expect(receptionPage.getByRole('tab', { name: 'Billing', exact: true })).toHaveCount(0);
     await receptionPage.getByRole('tab', { name: 'Patients', exact: true }).click();
     await expect(receptionPage.getByRole('button', { name: 'Clinical notes', exact: true })).toHaveCount(0);
-    assert.equal((await receptionPage.request.get(`${origin}/api/practice/${workspace.id}/documents?kind=invoice&id=${(await prisma.practiceInvoice.findFirstOrThrow({ where: { workspaceId: workspace.id } })).id}`)).status(), 403);
+    assert.equal((await get(receptionPage, `${origin}/api/practice/${workspace.id}/documents?kind=invoice&id=${(await prisma.practiceInvoice.findFirstOrThrow({ where: { workspaceId: workspace.id } })).id}`)).status(), 403);
     await receptionPage.evaluate(() => window.scrollTo(0, 0));
     await receptionPage.screenshot({ path: `${evidence}/reception-mobile.png`, fullPage: true });
     await page.getByRole('tab', { name: 'Booking requests', exact: true }).click();
@@ -160,7 +234,7 @@ async function main() {
     await page.getByLabel('Accept public booking requests').selectOption('true');
     await page.getByRole('button', { name: 'Save settings', exact: true }).click();
     await expect(page.getByText('Settings saved', { exact: true })).toBeVisible();
-    const publicContext = await browser.newContext({ viewport: { width: 390, height: 844 } }); const publicPage = await publicContext.newPage();
+    const publicContext = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 390, height: 844 } }); const publicPage = await publicContext.newPage();
     await publicPage.goto(`${origin}/book/${workspace.bookingSlug}`);
     await publicPage.getByLabel('Appointment date').fill(dateIn(2));
     await publicPage.getByRole('button', { name: /Consultation/ }).first().click();
@@ -183,12 +257,21 @@ async function main() {
     await expect(receptionPage.getByText('Request updated', { exact: true })).toBeVisible();
     assert.equal((await prisma.practiceBookingRequest.findUniqueOrThrow({ where: { id: booking.id } })).status, 'APPROVED');
     for (const p of [financePage, receptionPage, publicPage]) assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'Mobile page must not overflow horizontally');
+    const legacyPage = await login(legacy, false, false);
+    for (const path of ['/practice/patients', '/practice/calendar', '/practice/billing', '/practice/finance', '/practice/finance/patients', '/practice/finance/insurers', '/practice/finance/invoices', `/practice/finance/invoices/${legacyInvoice.id}`]) {
+      assert.equal((await legacyPage.goto(`${origin}${path}`))?.status(), 200);
+      await expect(legacyPage.getByText('You do not have access to Practice Finance.')).toHaveCount(0);
+    }
+    await expect(legacyPage.getByText(legacyInvoice.invoiceNumber, { exact: false }).first()).toBeVisible();
+    await legacyPage.goto(`${origin}/dashboard/hub/invoices/${legacyInvoice.id}?view=payments`);
+    await expect(legacyPage).toHaveURL(`${origin}/practice/finance/invoices/${legacyInvoice.id}?view=payments`);
+    assert.equal((await get(legacyPage, `${origin}/api/practice/${workspace.id}/patients`)).status(), 404);
     await prisma.user.update({ where: { id: owner.id }, data: { tier: 'TIER1_BASIC' } });
-    assert.equal((await financePage.request.get(`${origin}/api/practice/${workspace.id}/finance`)).status(), 403);
+    assert.equal((await get(financePage, `${origin}/api/practice/${workspace.id}/finance`)).status(), 403);
     await page.reload(); await expect(page.getByText(/Your workspace is read-only/)).toBeVisible();
     console.log(JSON.stringify({ result: 'passed', workspaceId: workspace.id, evidence, journeys: ['practitioner patient and appointment', 'invoice PDF', 'finance mobile receipt and credit', 'reception privacy', 'public verified request', 'reception approval', 'membership lapse'], browserErrors: failures }));
     assert.deepEqual(failures, []);
   } catch (error) { for (const context of browser.contexts()) { for (const p of context.pages()) await p.screenshot({ path: `${evidence}/failure-${browser.contexts().indexOf(context)}.png`, fullPage: true }).catch(() => {}); } throw error; }
-  finally { await browser.close(); }
+  finally { await browser.close(); await new Promise<void>((resolve) => proxy.close(() => resolve())); }
 }
 main().catch((error) => { console.error(error instanceof Error ? error.message : 'Runtime test failed'); process.exitCode = 1; }).finally(() => prisma.$disconnect());
