@@ -1,4 +1,6 @@
 'use client';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { PRACTICE_SECTIONS, type PracticeSection } from '@/lib/practice-routes';
 import { useState } from 'react';
 import useSWR from 'swr';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,26 +29,37 @@ const facilityFields: PracticeField[] = [
 ];
 const roleOptions = [{ value: 'RECEPTION', label: 'Reception' }, { value: 'FINANCE', label: 'Finance' }, { value: 'RECEPTION,FINANCE', label: 'Reception and finance' }];
 
-export function PracticeWorkspaceView() {
+export function PracticeWorkspaceView({ section = 'facilities' }: { section?: PracticeSection }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data, error, mutate } = useSWR<{ canCreate: boolean; workspaces: Workspace[] }>('/api/practice/workspaces', practiceFetch);
-  const [selected, setSelected] = useState('');
+  const selected = searchParams.get('workspace') ?? '';
+  const navigate = (next: PracticeSection, workspaceId = selected) => {
+    const query = new URLSearchParams(searchParams.toString());
+    if (workspaceId) query.set('workspace', workspaceId); else query.delete('workspace');
+    router.push(`${PRACTICE_SECTIONS[next].path}${query.size ? `?${query}` : ''}`);
+  };
   const workspace = data?.workspaces.find((row) => row.id === selected) ?? data?.workspaces[0];
   if (error) return <p role="alert" className="py-6 text-destructive">{error.message}</p>;
   if (!data) return <p className="py-6">Loading workspaces…</p>;
   return <div className="space-y-6 py-6">
     <div className="flex flex-wrap items-end gap-4">
-      {!!data.workspaces.length && <div className="min-w-64"><Label htmlFor="practice-workspace">Current practitioner</Label><select id="practice-workspace" className="mt-2 h-10 w-full rounded-md border bg-background px-3" value={workspace?.id} onChange={(event) => setSelected(event.target.value)}>{data.workspaces.map((row) => <option key={row.id} value={row.id}>{row.name}{row.isOwner ? ' — your workspace' : ''}</option>)}</select></div>}
+      {!!data.workspaces.length && <div className="min-w-64"><Label htmlFor="practice-workspace">Current practitioner</Label><select id="practice-workspace" className="mt-2 h-10 w-full rounded-md border bg-background px-3" value={workspace?.id} onChange={(event) => navigate(section, event.target.value)}>{data.workspaces.map((row) => <option key={row.id} value={row.id}>{row.name}{row.isOwner ? ' — your workspace' : ''}</option>)}</select></div>}
       {data.canCreate && !data.workspaces.some((row) => row.isOwner) && <Button onClick={async () => { try { await practiceSend('/api/practice/workspaces', {}); await mutate(); } catch (e) { toast.error((e as Error).message); } }}>Create my workspace</Button>}
     </div>
     {!workspace ? <p>No workspace yet. Practitioners need Professional membership. Staff join through an invitation.</p> : <>
       {!workspace.active && <p role="status" className="rounded-md bg-muted p-4">Your workspace is read-only. You can view and export existing records. Restore Professional membership to resume activity.</p>}
-      <Tabs key={workspace.id} defaultValue="facilities">
-        <TabsList className="flex h-auto flex-wrap justify-start"><TabsTrigger value="facilities">Facilities</TabsTrigger>{workspace.capabilities.includes('patient.read') && <TabsTrigger value="patients">Patients</TabsTrigger>}{workspace.capabilities.includes('calendar.read') && <><TabsTrigger value="calendar">Calendar</TabsTrigger><TabsTrigger value="bookings">Booking requests</TabsTrigger></>}{workspace.capabilities.includes('billing.read') && <><TabsTrigger value="finance">Finance</TabsTrigger><TabsTrigger value="reports">Reports</TabsTrigger></>}{workspace.capabilities.includes('team.manage') && <><TabsTrigger value="team">Team</TabsTrigger></>}{workspace.capabilities.includes('clinical.read') && <TabsTrigger value="reconciliation">Reconciliation</TabsTrigger>}</TabsList>
+      <Tabs key={workspace.id} value={section} onValueChange={(value) => navigate(value as PracticeSection, workspace.id)}>
+        <TabsList className="flex h-auto flex-wrap justify-start">
+          {Object.entries(PRACTICE_SECTIONS).map(([key, item]) => (!item.capability || workspace.capabilities.includes(item.capability)) && <TabsTrigger key={key} value={key}>{item.label}</TabsTrigger>)}
+        </TabsList>
+        {PRACTICE_SECTIONS[section].capability && !workspace.capabilities.includes(PRACTICE_SECTIONS[section].capability!) && <p role="alert" className="py-6 text-muted-foreground">You do not have access to this section of the workspace.</p>}
         <TabsContent value="facilities"><PracticeFacilities workspace={workspace} /></TabsContent>
         {workspace.capabilities.includes('patient.read') && <TabsContent value="patients"><PracticePatients workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
         {workspace.capabilities.includes('calendar.read') && <TabsContent value="calendar"><PracticeCalendar workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
         {workspace.capabilities.includes('calendar.read') && <TabsContent value="bookings"><PracticeBookings workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
         {workspace.capabilities.includes('billing.read') && <TabsContent value="finance"><PracticeFinance workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
+        {workspace.capabilities.includes('billing.read') && <TabsContent value="accounts"><PracticeFinance workspaceId={workspace.id} capabilities={workspace.capabilities} initialTab="payers" /></TabsContent>}
         {workspace.capabilities.includes('report.read') && <TabsContent value="reports"><PracticeReports workspaceId={workspace.id} /></TabsContent>}
         {workspace.capabilities.includes('team.manage') && <><TabsContent value="team"><PracticeTeam workspace={workspace} /></TabsContent></>}
       {workspace.capabilities.includes('clinical.read') && <TabsContent value="reconciliation"><PracticeReconciliation workspaceId={workspace.id} writable={workspace.capabilities.includes('billing.approve')} /></TabsContent>}</Tabs>

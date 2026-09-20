@@ -57,7 +57,7 @@ export function StartDebateForm({ tier }: { tier: string | null }) {
             <Link href="/community">Browse community</Link>
           </Button>
           <Button asChild>
-            <Link href="/dashboard/billing">Upgrade membership</Link>
+            <Link href="/membership">Upgrade membership</Link>
           </Button>
         </div>
       </div>

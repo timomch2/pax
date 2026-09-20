@@ -18,7 +18,7 @@ async function ledgerOptions(url: string) {
   return rows;
 }
 
-export function PracticeFinance({ workspaceId, capabilities }: { workspaceId: string; capabilities: PracticeAction[] }) {
+export function PracticeFinance({ workspaceId, capabilities, initialTab = "services" }: { workspaceId: string; capabilities: PracticeAction[]; initialTab?: "services" | "payers" }) {
   const base = `/api/practice/${workspaceId}/finance`;
   const { mutate } = useSWRConfig();
   const writable = capabilities.includes('billing.manage');
@@ -30,7 +30,7 @@ export function PracticeFinance({ workspaceId, capabilities }: { workspaceId: st
   };
   const { data: payers = [] } = useSWR<any[]>(`${base}?view=payers`, ledgerOptions);
   const { data: rates = [] } = useSWR<any[]>(`${base}?view=rates`, ledgerOptions);
-  return <Tabs defaultValue="services"><TabsList className="flex h-auto flex-wrap justify-start"><TabsTrigger value="services">Unbilled work</TabsTrigger><TabsTrigger value="invoices">Invoices</TabsTrigger><TabsTrigger value="receipts">Receipts and credit</TabsTrigger><TabsTrigger value="payers">Payers</TabsTrigger><TabsTrigger value="rates">Tax settings</TabsTrigger><TabsTrigger value="adjustments">Adjustments</TabsTrigger></TabsList>
+  return <Tabs defaultValue={initialTab}><TabsList className="flex h-auto flex-wrap justify-start"><TabsTrigger value="services">Unbilled work</TabsTrigger><TabsTrigger value="invoices">Invoices</TabsTrigger><TabsTrigger value="receipts">Receipts and credit</TabsTrigger><TabsTrigger value="payers">Payers</TabsTrigger><TabsTrigger value="rates">Tax settings</TabsTrigger><TabsTrigger value="adjustments">Adjustments</TabsTrigger></TabsList>
     <TabsContent value="services"><InvoiceComposer base={base} payers={payers} rates={rates} writable={writable} send={send} /></TabsContent>
     <TabsContent value="invoices"><LedgerRecords base={base} view="invoices" /></TabsContent>
     <TabsContent value="receipts"><ReceiptComposer base={base} payers={payers} writable={writable} send={send} /><LedgerRecords base={base} view="receipts" /></TabsContent>

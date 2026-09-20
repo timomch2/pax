@@ -105,7 +105,7 @@ export function TalentShell({
       header={
         <div className="flex w-full items-center justify-between gap-3">
           <span className="text-sm font-semibold">PAX Talent</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="hidden text-xs text-muted-foreground lg:inline">
             Health-sector careers and evidence-backed impact
           </span>
         </div>

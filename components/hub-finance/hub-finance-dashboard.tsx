@@ -94,7 +94,7 @@ export function HubFinanceDashboard() {
           <Button type="button" variant="outline" size="sm" className="gap-2" onClick={handleExportCsv} disabled={exporting}>
             <Download className="h-4 w-4" /> {exporting ? 'Preparing…' : 'Ageing CSV'}
           </Button>
-          <Link href="/dashboard/hub/invoices">
+          <Link href="/practice/finance/invoices">
             <Button size="sm" className="gap-2" style={{ backgroundColor: TEAL, color: '#0B0F1A' }}>
               <Plus className="h-4 w-4" /> New invoice
             </Button>
@@ -188,7 +188,7 @@ export function HubFinanceDashboard() {
         <CardContent className="p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-display text-base font-semibold">Recent invoices</h3>
-            <Link href="/dashboard/hub/invoices" className="flex items-center gap-1 text-xs font-medium" style={{ color: TEAL }}>
+            <Link href="/practice/finance/invoices" className="flex items-center gap-1 text-xs font-medium" style={{ color: TEAL }}>
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -198,14 +198,14 @@ export function HubFinanceDashboard() {
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <ReceiptText className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No invoices yet. Create your first one to start tracking payments.</p>
-              <Link href="/dashboard/hub/invoices">
+              <Link href="/practice/finance/invoices">
                 <Button size="sm" style={{ backgroundColor: TEAL, color: '#0B0F1A' }}>New invoice</Button>
               </Link>
             </div>
           ) : (
             <div className="divide-y divide-black/[0.06]">
               {recent.map((inv) => (
-                <Link key={inv.id} href={`/dashboard/hub/invoices/${inv.id}`} className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-black/[0.02]">
+                <Link key={inv.id} href={`/practice/finance/invoices/${inv.id}`} className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-black/[0.02]">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{inv.patientName}</p>
                     <p className="text-xs text-muted-foreground">{inv.invoiceNumber} · {fmtDate(inv.serviceDate)}</p>
@@ -225,9 +225,9 @@ export function HubFinanceDashboard() {
 
       {/* Quick links */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <QuickLink href="/dashboard/hub/invoices" icon={<FileText className="h-5 w-5" />} label="Invoices" desc="Bill & split payers" />
-        <QuickLink href="/dashboard/hub/patients" icon={<Users className="h-5 w-5" />} label="Patients" desc="Your records" />
-        <QuickLink href="/dashboard/hub/insurers" icon={<Building2 className="h-5 w-5" />} label="Payers" desc="Insurer directory" />
+        <QuickLink href="/practice/finance/invoices" icon={<FileText className="h-5 w-5" />} label="Invoices" desc="Bill & split payers" />
+        <QuickLink href="/practice/finance/patients" icon={<Users className="h-5 w-5" />} label="Patients" desc="Your records" />
+        <QuickLink href="/practice/finance/insurers" icon={<Building2 className="h-5 w-5" />} label="Payers" desc="Insurer directory" />
       </div>
     </div>
   );

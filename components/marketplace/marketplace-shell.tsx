@@ -14,6 +14,7 @@ import { LogOut } from 'lucide-react';
 const navItems = [
   { href: '/marketplace', label: 'Browse Marketplace', icon: Store },
   { href: '/marketplace/vendor', label: 'Vendor Dashboard', icon: ShoppingBag },
+  { href: '/marketplace/profile', label: 'My Profile', icon: UserCircle },
   { href: '/marketplace/buyer', label: 'Buyer Profile', icon: ClipboardList },
   { href: '/community', label: 'PAX Exchange Community & Debate Hub', icon: Scale },
 ];
@@ -63,7 +64,7 @@ export function MarketplaceShell({ children }: { children: React.ReactNode }) {
           <h2 className="text-[#1A2332] font-semibold">Product Marketplace</h2>
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <span className="text-sm text-gray-400">{session?.user?.name}</span>
+
           </div>
         </div>
       }>

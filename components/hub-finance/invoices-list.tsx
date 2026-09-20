@@ -155,7 +155,7 @@ export function InvoicesList() {
                     return (
                       <tr
                         key={inv.id}
-                        onClick={() => router.push(`/dashboard/hub/invoices/${inv.id}`)}
+                        onClick={() => router.push(`/practice/finance/invoices/${inv.id}`)}
                         className="cursor-pointer border-b border-black/[0.06] transition-colors last:border-0 hover:bg-black/[0.02]"
                       >
                         <td className="px-4 py-3 font-medium">{inv.invoiceNumber}</td>
@@ -181,7 +181,7 @@ export function InvoicesList() {
         </Card>
       )}
 
-      <NewInvoiceDialog open={open} onOpenChange={setOpen} onCreated={(id) => router.push(`/dashboard/hub/invoices/${id}`)} />
+      <NewInvoiceDialog open={open} onOpenChange={setOpen} onCreated={(id) => router.push(`/practice/finance/invoices/${id}`)} />
     </div>
   );
 }

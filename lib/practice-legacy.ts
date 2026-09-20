@@ -15,7 +15,7 @@ export async function practiceWorkspaceForOwner(ownerId: string) {
 }
 export async function expandedPracticePath(ownerId: string) {
   const workspace = await practiceWorkspaceForOwner(ownerId);
-  return workspace && practiceMembershipActive(workspace.owner) ? '/dashboard/practice' : null;
+  return workspace && practiceMembershipActive(workspace.owner) ? '/practice' : null;
 }
 
 /** Legacy account identity is preserved explicitly; matching contact details never auto-merge patients. */

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { UserMenu } from '@/components/layouts/user-menu';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -168,12 +169,7 @@ export function LandingPage() {
           </ul>
           <div className="hidden md:flex items-center gap-3">
             {session ? (
-              <a
-                onClick={() => router.push('/dashboard')}
-                className="px-5 py-2.5 bg-[#1F7A74] border border-[#1F7A74] rounded-lg text-[13px] font-semibold text-white no-underline hover:bg-[#186963] hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(45,155,148,0.4)] transition-all cursor-pointer"
-              >
-                Dashboard
-              </a>
+              <UserMenu />
             ) : (
               <>
                 <a
@@ -201,6 +197,7 @@ export function LandingPage() {
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
+        {session?.user && <div className="flex justify-end px-4 pb-2 md:hidden"><UserMenu /></div>}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-black/5 bg-[#FAF8F5] px-6 py-5 shadow-lg">
             <div className="flex flex-col gap-4">

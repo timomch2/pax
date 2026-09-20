@@ -34,7 +34,7 @@ export default async function AccountPage() {
         </a>
         <a
           className="text-primary underline"
-          href={productUrl("practice", "/dashboard/practice")}
+          href={productUrl("practice", "/practice")}
         >
           Open Practice
         </a>

@@ -89,7 +89,7 @@ export function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       const res = await fetch(`/api/hub/invoices/${invoiceId}`);
       if (res.status === 404) {
         toast.error('Invoice not found.');
-        router.push('/dashboard/hub/invoices');
+        router.push('/practice/finance/invoices');
         return;
       }
       if (res.ok) {
@@ -290,7 +290,7 @@ export function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
 
   return (
     <div className="space-y-6">
-      <Link href="/dashboard/hub/invoices" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#1A2332]">
+      <Link href="/practice/finance/invoices" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#1A2332]">
         <ArrowLeft className="h-4 w-4" /> All invoices
       </Link>
 

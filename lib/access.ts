@@ -217,7 +217,7 @@ export function hasRole(primaryRole?: string | null, additionalRoles?: string[],
 
 export function homePathForRole(role?: string | null): string {
   if (role === 'MEMBER') return '/talent';
-  if (role === 'STAFF') return '/dashboard/practice';
+  if (role === 'STAFF') return '/practice';
   switch (role) {
     case 'INVESTOR':
       return '/investor';

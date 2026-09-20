@@ -1,25 +1,31 @@
 "use client";
 import { useState } from "react";
-import { BriefcaseBusiness, Grip, House, Stethoscope } from "lucide-react";
+import { BriefcaseBusiness, Grip, House, Stethoscope, Store, MessagesSquare } from "lucide-react";
+import { useSession } from "next-auth/react";
+import type { ServiceId } from "@/lib/service-navigation";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type ProductLink = { label: string; href: string };
 
-const LAUNCHER_SERVICES = [
-  { sourceLabel: "PAX", label: "Home", icon: House },
-  { sourceLabel: "Practitioners", label: "Practitioner", icon: Stethoscope },
-  { sourceLabel: "Talent", label: "Talent", icon: BriefcaseBusiness },
-];
+const SERVICE_ICONS = { home: House, practice: Stethoscope, talent: BriefcaseBusiness, market: Store, community: MessagesSquare };
+export type ProductsResponse = {
+  enabled: boolean;
+  links: ProductLink[];
+  services: (ProductLink & { id: ServiceId; profileHref: string })[];
+  accountHref: string;
+  logoutHref: string;
+};
 
 /** Resolve deployment-specific product links without baking hostnames into client bundles. */
 export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "launcher" }) {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
-  const { data } = useSWR<{ enabled: boolean; links: ProductLink[] }>("/api/products", (url: string) =>
+  const { data } = useSWR<ProductsResponse>("/api/products", (url: string) =>
     fetch(url).then((response) => response.json()),
   );
-  if (!data?.enabled) return null;
+  if (!data || (variant === "launcher" ? !session?.user : !data.enabled)) return null;
 
   if (variant === "launcher") {
     return (
@@ -44,12 +50,11 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
         >
           <p className="mb-3 px-2 text-sm font-semibold">PAX apps</p>
           <nav aria-label="PAX services" className="grid grid-cols-3 gap-1">
-            {LAUNCHER_SERVICES.map(({ sourceLabel, label, icon: Icon }) => {
-              const link = data.links.find((item) => item.label === sourceLabel);
-              if (!link) return null;
+            {data.services.map((link) => {
+              const Icon = SERVICE_ICONS[link.id];
               return (
                 <a
-                  key={sourceLabel}
+                  key={link.id}
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className="flex flex-col items-center gap-3 rounded-xl px-1 py-4 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:underline focus-visible:outline-none"
@@ -57,7 +62,7 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
-                  {label}
+                  {link.label}
                 </a>
               );
             })}

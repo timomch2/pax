@@ -89,8 +89,8 @@ export function HubShell({
   );
 
   const header = (
-    <div className="flex flex-1 items-center justify-between">
-      <h1 className="font-display text-lg font-semibold tracking-tight">
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+      <h1 className="truncate font-display text-lg font-semibold tracking-tight">
         {navItems.find((n) => n.href === pathname)?.label ?? roleLabel}
       </h1>
       <div className="flex items-center gap-2">

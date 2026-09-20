@@ -8,7 +8,7 @@ export function PracticeInvitationForm() {
   const { data: session, status } = useSession();
   const [token, setToken] = useState(''), [complete, setComplete] = useState(false);
   useEffect(() => { setToken(window.location.hash.slice(1)); }, []);
-  if (complete) return <p>Invitation accepted. <Link className="text-primary underline" href={session ? '/dashboard/practice' : '/login?callbackUrl=%2Fdashboard%2Fpractice'}>{session ? 'Open workspace' : 'Sign in to your staff account'}</Link></p>;
+  if (complete) return <p>Invitation accepted. <Link className="text-primary underline" href={session ? '/practice' : '/login?callbackUrl=%2Fdashboard%2Fpractice'}>{session ? 'Open workspace' : 'Sign in to your staff account'}</Link></p>;
   if (status === 'loading') return <p>Loading your account…</p>;
   if (!token) return <p>Open the invitation link from your email to continue.</p>;
   return <div className="space-y-4">

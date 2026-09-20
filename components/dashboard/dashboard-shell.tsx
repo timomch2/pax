@@ -28,17 +28,17 @@ import useSWR from 'swr';
 import { roleLabel } from '@/lib/access';
 
 const navItems = [
-  { href: '/dashboard/practice', label: 'Practice Workspace', icon: Wallet, permission: 'practice.read' },
+  { href: '/practice', label: 'Practice Workspace', icon: Wallet, permission: 'practice.read' },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.read' },
-  { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar, permission: 'hub.appointment.read' },
-  { href: '/dashboard/patients', label: 'Patients', icon: Users, permission: 'hub.patient.read' },
+  { href: '/practice/calendar', label: 'Calendar', icon: Calendar, permission: 'hub.appointment.read' },
+  { href: '/practice/patients', label: 'Patients', icon: Users, permission: 'hub.patient.read' },
   { href: '/dashboard/members', label: 'Members', icon: Users2, permission: 'member.read' },
   { href: '/dashboard/talent-search', label: 'Talent Search', icon: Briefcase, permission: 'talent.job.read' },
   { href: '/dashboard/challenges', label: 'Challenge Briefs', icon: Megaphone, permission: 'community.read' },
   { href: '/community', label: 'PAX Exchange Community & Debate Hub', icon: Scale, permission: 'community.read' },
   { href: '/marketplace', label: 'Marketplace', icon: Store, permission: 'marketplace.listing.read' },
-  { href: '/dashboard/billing', label: 'Billing', icon: Receipt, permission: 'hub.invoice.read' },
-  { href: '/dashboard/hub', label: 'Practice Finance', icon: Wallet, permission: 'hub.invoice.read' },
+  { href: '/practice/billing', label: 'Billing', icon: Receipt, permission: 'hub.invoice.read' },
+  { href: '/practice/finance', label: 'Practice Finance', icon: Wallet, permission: 'hub.invoice.read' },
   { href: '/dashboard/verification', label: 'Verification', icon: ShieldCheck, permission: 'verification.request' },
   { href: '/dashboard/profile', label: 'Profile', icon: UserCircle, permission: 'profile.read' },
   { href: '/dashboard/privacy', label: 'Privacy & My Data', icon: Lock, permission: 'privacy.manage' },
@@ -118,8 +118,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   );
 
   const header = (
-    <div className="flex flex-1 items-center justify-between">
-      <h1 className="font-display text-lg font-semibold tracking-tight">
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+      <h1 className="truncate font-display text-lg font-semibold tracking-tight">
         {navItems.find((n: any) => n.href === pathname)?.label ?? 'Dashboard'}
       </h1>
       <div className="flex items-center gap-2">

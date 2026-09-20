@@ -1,6 +1,6 @@
 'use client'
 
-import { ProductSwitcher } from '@/components/product-switcher'
+import { UserMenu } from '@/components/layouts/user-menu'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { PanelLeft } from 'lucide-react'
@@ -45,7 +45,7 @@ export function AppShell({
       {/* Main area */}
       <div className="lg:pl-64">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-black/[0.06] bg-white/80 backdrop-blur-md px-4 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 sm:gap-4 border-b border-black/[0.06] bg-white/80 backdrop-blur-md px-4 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -56,7 +56,7 @@ export function AppShell({
             <PanelLeft className="h-5 w-5" />
           </Button>
           <div className="min-w-0 flex-1">{header}</div>
-          <ProductSwitcher variant="launcher" />
+          <UserMenu />
         </header>
 
         {/* Content */}

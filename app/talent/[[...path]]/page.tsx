@@ -160,7 +160,7 @@ export default async function Page({
     <TalentShell
       links={{
         main: productUrl("main", "/"),
-        practice: productUrl("practice", "/dashboard/practice"),
+        practice: productUrl("practice", "/practice"),
         accounts: productUrl("accounts", "/account"),
         login: loginUrl,
         register: productUrl(

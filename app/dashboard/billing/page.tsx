@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function BillingPage() {
   const session = await getServerSession(authOptions);
-  if (session?.user?.id && await expandedPracticePath(session.user.id)) redirect('/dashboard/practice');
+  if (session?.user?.id && await expandedPracticePath(session.user.id)) redirect('/practice/billing');
 
   return <BillingContent />;
 }

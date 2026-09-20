@@ -1,5 +1,7 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
+import { UserMenu } from '@/components/layouts/user-menu';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -19,6 +21,7 @@ const NAV_LINKS = [
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,6 +42,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             ))}
           </ul>
           <div className="hidden md:flex items-center gap-3">
+            {session?.user ? <UserMenu /> : <>
             <button
               onClick={() => router.push('/login')}
               className="px-5 py-2.5 border border-black/15 rounded-lg text-[13px] font-medium text-gray-700 bg-transparent hover:border-[#1F7A74] hover:text-[#1F7A74] transition-all cursor-pointer"
@@ -51,11 +55,14 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             >
               Join PAX
             </button>
+
+            </>}
           </div>
           <button className="md:hidden text-[#1A2332]" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
+        {session?.user && <div className="flex justify-end px-4 pb-2 md:hidden"><UserMenu /></div>}
         {open && (
           <div className="md:hidden border-t border-black/5 bg-[#FAF8F5] px-6 py-4 flex flex-col gap-4">
             {NAV_LINKS.map((l) => (
