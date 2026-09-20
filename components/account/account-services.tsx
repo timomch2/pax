@@ -29,7 +29,7 @@ export function AccountServices({ initialServices, selectedService, userId }: { 
     } catch (err) { toast.error(err instanceof Error ? err.message : 'Unable to update service'); }
     finally { setBusy(null); }
   }
-  return <section id="my-services" className="space-y-4 scroll-mt-6" aria-labelledby="my-services-heading">
+  return <section id="my-services" className="space-y-4 scroll-mt-20" aria-labelledby="my-services-heading">
     <div><h2 id="my-services-heading" className="text-xl font-semibold">My services</h2><p className="mt-1 text-sm text-muted-foreground">Choose the services you want to use, then complete their setup.</p></div>
     <p className="text-sm text-muted-foreground">Enabling a service keeps your existing permissions and verification requirements. Disabling removes it from your enabled services; it preserves your data and does not revoke existing workspace access or cancel a subscription.</p>
     {error && <p role="alert" className="text-sm text-destructive">Could not refresh your services. Please try again.</p>}

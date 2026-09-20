@@ -12,11 +12,13 @@ export function AppShell({
   header,
   children,
   className,
+  closeSidebarOnNavigate = false,
 }: {
   sidebar: React.ReactNode
   header?: React.ReactNode
   children: React.ReactNode
   className?: string
+  closeSidebarOnNavigate?: boolean
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -32,6 +34,9 @@ export function AppShell({
 
       {/* Sidebar */}
       <aside
+        onClick={closeSidebarOnNavigate ? (event) => {
+          if (event.target instanceof Element && event.target.closest('a[href]')) setSidebarOpen(false)
+        } : undefined}
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-64 border-r border-black/[0.06] bg-white transition-transform duration-normal ease-out lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'

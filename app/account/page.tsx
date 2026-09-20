@@ -23,36 +23,21 @@ export default async function AccountPage({ searchParams }: { searchParams: { se
   });
   const services = await readAccountServices(session.user.id);
   return (
-    <Container size="md" className="space-y-6 py-8">
+    <Container size="md" className="space-y-6">
       <PageHeader
         title="Your PAX account"
         description="One identity across your PAX products."
       />
-      <div className="flex flex-wrap gap-5 text-sm">
-        <a
-          className="text-primary underline"
-          href={productUrl("talent", "/talent")}
-        >
-          Open Talent
-        </a>
-        <a
-          className="text-primary underline"
-          href={productUrl("practice", "/practice")}
-        >
-          Open Practice
-        </a>
-        <a className="text-primary underline" href={productUrl("main", "/")}>
-          Main PAX platform
-        </a>
-      </div>
       <p>
         {user.name} · <span suppressHydrationWarning>{user.email}</span>
       </p>
       <AccountServices userId={session.user.id} initialServices={services} selectedService={searchParams.service} />
+      <section id="account-security" aria-label="Account security" className="scroll-mt-20">
       <AccountSecurity
         mfaEnabled={user.mfaEnabled}
         hasPassword={Boolean(user.password)}
       />
+      </section>
     </Container>
   );
 }
