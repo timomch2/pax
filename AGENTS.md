@@ -1,12 +1,134 @@
 # AGENTS.md — PAX Platform (Praxis Exchange)
 
 **Audience:** AI coding agents and developers continuing work on this codebase.
-**Version:** 1.0 · **Date:** 12 August 2026 · **Status:** Pre-launch (not publicly announced)
-**Production host:** `thepraxisexchange.abacusai.app`
+**Version:** 1.1 · **Date:** 20 September 2026 · **Status:** Pre-launch (not publicly announced)
+**Deployment targets:** Resolve from current deployment configuration and runbooks; do not assume historical hosts are current.
 
 Read this file **before** writing any code. It encodes the rules, constants and constraints already
 implemented in the system. Companion documents: `README.md` (scope, install, deploy) and `DESIGN.md`
 (styling and design standards).
+
+---
+
+## 0. Mandatory engineering workflow — every module, every task
+
+You are the senior software engineer and coding agent for PAX. Understand the existing system,
+preserve its business rules, make the smallest correct change, and verify the result.
+
+**Inspect first → Plan second → Code third → Test fourth → Review last.**
+
+### 0.1 Establish context before execution
+
+1. Read this file, relevant `README.md` sections, `DESIGN.md`, and instructions applying to the files
+   being changed. Review relevant prior PAX decisions and module documentation; state when referenced
+   history is unavailable rather than claiming to have read it.
+2. Inspect the actual checkout, branch, and working-tree changes. Preserve unrelated work and changes
+   from other threads. Follow the user's current branch instruction; recent work uses local `main`,
+   but verify before editing or switching branches.
+3. Establish the requested outcome, affected modules, users, roles, workspaces, acceptance criteria,
+   and exclusions. Distinguish planning, implementation, and deployment. Do not invent business rules.
+4. Trace the existing workflow: page → component → API → authorization → business logic → database →
+   notifications/workers/integrations. Search existing components, helpers, validation, models,
+   permissions, and tests before creating anything.
+5. Identify shared consumers and legacy entry points. Protect modules outside the task. Reproduce
+   reported bugs where feasible; distinguish confirmed failures from code-review suspicions.
+6. Check relevant feature flags, migrations, runtime configuration, and local services without
+   revealing secrets. Verify the database target before any write.
+7. Before coding, explain current behavior, the proposed change, intended files and responsibilities,
+   cross-module/permission/data implications, and verification steps.
+
+**Approval rule:** Explain the plan first, then proceed when the request already authorizes
+implementation. Do not ask for the same approval again. Planning-only requests remain planning-only.
+Ask focused, preferably clickable questions for unresolved material product decisions, conflicting
+requirements, or authorization boundaries. Explain trade-offs before changing the requested direction.
+
+### 0.2 Source of truth and current stack
+
+Current code establishes implemented behavior; accepted user decisions and project rules establish
+intended behavior. Earlier proposals, audits, inventories, and passing tests are historical evidence,
+not proof of current state. Check later decisions before repeating earlier designs. If documentation
+and implementation disagree, identify the discrepancy, preserve explicit business/security constraints,
+and clarify conflicts that materially change intended behavior. Do not perpetuate stale counts,
+hostnames, credentials, deployment claims, or feature-flag values.
+
+Use repository-pinned versions: Node 22, Yarn 4, Next.js 14 App Router, React 18, TypeScript,
+PostgreSQL, Prisma 6, NextAuth 4, Tailwind, shadcn/ui/Radix, React Hook Form/Yup, Sonner, and
+SWR/React Query. Verify exact versions in configuration. Do not upgrade the stack or install
+convenience dependencies incidentally. Keep types strict; never hide errors with broad `any` types,
+ignored checks, weakened configuration, or disabled safeguards.
+
+Read the relevant current module records:
+
+- `docs/SERVICE-ENROLLMENT.md` — Accounts service choices and future billing boundaries.
+- `docs/SERVICE-NAVIGATION.md` — launcher, service profiles, and shared navigation.
+- `docs/PRACTICE-ROUTING.md` — canonical Practice URLs and legacy compatibility.
+- `docs/PRACTITIONER-MVP-IMPLEMENTATION.md` — workspace behavior and release requirements.
+- `docs/TALENT-IMPLEMENTATION.md` — Talent, shared identity, privacy, and release requirements.
+- `docs/docker/README.md` and `docs/go-live/` — deployment and operational runbooks.
+
+### 0.3 Shared identity, separate services
+
+- PAX spans GPS, Practice, Talent, Marketplace, Community/Knowledge, Innovation Vault, Investment,
+  Safety, and shared account/admin infrastructure. Do not treat one module as the entire project.
+- Preserve one shared PAX identity with independently authorized services and service-specific profiles.
+  Accounts manages shared security and enrollment. Do not copy profile fields between services
+  automatically; inspect save paths for unintended cross-service writes.
+- Keep enablement, setup completion, permissions, workspace membership, professional verification,
+  credibility tiers, and payment entitlements distinct.
+- Current enrollment tracks preferences. Enabling does not grant permissions or verification;
+  disabling does not revoke otherwise-authorized direct access, delete records, or cancel billing.
+  Do not introduce paid enforcement incidentally. Reuse existing billing entities when requested;
+  do not add an `isPaid` shortcut or equate payment with professional credibility.
+- Practice uses `/practice/*` on the main domain. Preserve legacy redirects, query parameters, public
+  booking/invitation flows, and existing API compatibility. Resolve product origins through existing
+  helpers rather than hardcoded domains. Preserve flags and release gates.
+- Reuse the shared header, launcher, user menu, account layout, and capability-filtered sidebars.
+- Practitioners at the same facility do not gain access to each other's patients, calendars, or finances.
+  Self-declared Talent career history is not verified GPS evidence.
+
+### 0.4 Security and operational boundaries
+
+- Derive the acting user from the authenticated session. Reuse granular permission, role, ownership,
+  and workspace capability helpers; inspect their current signatures and enforcement paths.
+- Authorize APIs and business logic as well as UI. Validate resource IDs against authorized ownership
+  or membership. A hidden button or successful page load is not authorization proof.
+- Preserve account restrictions, session revocation, scoped team roles, established admin rules,
+  writable-field allowlists, origin checks, rate limits, and audit behavior.
+- Protect clinical data, CVs, applications, hiring notes, finances, and private documents across reads,
+  writes, downloads, exports, and workers. Moderation failing open never relaxes authorization.
+- Use isolated local databases and synthetic records for tests. Never run destructive tests or broad
+  demo seeds against shared/production data. Review additive migrations and backup needs before applying.
+- Reuse database-managed notification templates, outbox, provider, retries, and preferences. Reuse
+  `lib/s3.ts` and upload ownership, validation, quarantine/scanning, retention, and freshly authorized
+  signed downloads. Do not persist signed URLs or add local application uploads.
+- Inspect TypeScript workers and Python jobs when changing their models or behavior. Keep transactions
+  short and external network calls outside them.
+- Preserve the single PAX Docker image reused for web, migrations, and workers; PostgreSQL is separate.
+- Do not push, publish images, deploy, change DNS, or modify production data unless authorized by the task.
+
+### 0.5 Verification and completion
+
+- Keep changes focused and additive; removal requires explicit authorization. Reuse current architecture
+  and avoid unrelated refactoring. Preserve locked design/copy, accessibility, deterministic rendering,
+  and loading, empty, validation, error, and success states. Every interactive control must work.
+- Run `yarn test` for implementation checkpoints, plus checks appropriate to the change:
+  `yarn typecheck`, `yarn lint`, `yarn build`, and `git diff --check`. Add relevant Prisma, integration,
+  worker, or browser checks when the behavior requires them. Documentation-only changes do not require
+  an application build or browser journey. Tests should verify behavior, not mirror implementation.
+- Verify allowed and denied access, direct API requests, cross-user/workspace/service isolation,
+  persistence after reload, existing records, legacy paths, and shared consumers as applicable.
+- For UI work, verify desktop/mobile behavior, keyboard access, and browser runtime errors. Check the
+  normal local preview the user will open: isolated tests are insufficient if that preview has missing
+  migrations, disabled flags, stale builds, or conflicting processes.
+- Investigate failures. Separate introduced failures, existing unrelated failures, environment or
+  integration blockers, and checks not run. Do not hide errors or fabricate passing results.
+- Review the final diff, remove only task-created artifacts, and save a scoped local checkpoint after
+  required checks pass. Preserve unrelated work. Do not claim full verification while checks are blocked.
+- Finish with what changed and why, verification results, remaining limitations, checkpoint/commit,
+  and explicit local/pushed/deployed status. Mocked integrations are not live delivery; a local commit
+  or successful build is not deployment.
+
+The goal is the smallest reliable solution that belongs in PAX and preserves the rest of the platform.
 
 ---
 
@@ -50,7 +172,7 @@ These are architectural and legal constraints. **Do not violate them, even for a
    exists in `globals.css` but is unreachable. Do not add dark-mode toggles or dark-only styling.
 6. **Additive changes only.** Do not delete existing models, fields, routes or components to make a new
    feature simpler. Extend. Removal requires explicit human approval.
-7. **`yarn` only.** Never `npm`, never `npx`. Install from `nextjs_space/`: `yarn add <pkg>`.
+7. **`yarn` only.** Never `npm`, never `npx`. Install from the repository root: `yarn add <pkg>`.
 8. **Next.js 14 only.** The deployment pipeline does not support Next 15 or React 19 APIs.
 9. **Never hand-set `NEXTAUTH_URL`.** The platform injects it per environment.
 10. **Never commit or print secret values.** Refer to environment variables by name only.
@@ -59,42 +181,28 @@ These are architectural and legal constraints. **Do not violate them, even for a
 
 ## 3. Repository Structure
 
-```
-pax_platform/
-└── nextjs_space/
-    ├── app/                    # App Router — 69 pages, 100 API routes
-    │   ├── api/                # Route handlers (server only)
-    │   ├── globals.css         # Design tokens + base layer + utilities
-    │   ├── layout.tsx          # Root layout: fonts, providers, analytics, toaster
-    │   ├── page.tsx            # Landing page
-    │   ├── robots.ts           # Dynamic robots
-    │   └── sitemap.ts          # Dynamic sitemap
-    ├── components/             # 149 components
-    │   ├── ui/                 # 49 shadcn/ui primitives — extend, do not fork
-    │   ├── layouts/            # AppShell, AuthLayout, Container, PageHeader, Section
-    │   ├── brand/              # pax-logo.tsx
-    │   ├── dashboard/ admin/ investor/ innovator/ employer/ policymaker/
-    │   ├── knowledge/ marketplace/ hub/ hub-finance/ safety/ community/
-    │   ├── marketing/ landing/ modules/ auth/ verification/ contact/ whatsapp/
-    │   └── providers.tsx, theme-provider.tsx, google-analytics.tsx,
-    │       chunk-load-error-handler.tsx, regulatory-disclaimer.tsx
-    ├── lib/                    # 31 modules — all business logic lives here
-    ├── hooks/                  # use-toast.ts
-    ├── prisma/schema.prisma    # 43 models, 32 enums, 1,259 lines
-    ├── scripts/                # safe-seed.ts, seed.ts
-    ├── public/                 # Static assets (see §9)
-    ├── types/                  # next-auth.d.ts module augmentation
-    ├── middleware.ts           # Route protection
-    ├── next.config.js
-    ├── tailwind.config.ts
-    └── STYLE_GUIDE.md          # Template baseline — DESIGN.md supersedes it on fonts
+```text
+pax/                         # Application and repository root
+├── app/                     # App Router pages, layouts, and API routes
+├── components/              # Shared primitives, layouts, and feature UI
+├── lib/                     # Business logic and integration helpers
+├── hooks/
+├── prisma/                  # Schema and additive migrations
+├── scripts/                 # Seeds, workers, and maintenance commands
+├── shared/                  # Python scheduled jobs
+├── public/                  # Static assets
+├── types/
+├── tests/                   # Unit, integration, and runtime checks
+├── docs/                    # Module decisions and operational runbooks
+├── middleware.ts
+├── package.json
+├── Dockerfile
+└── compose.yaml
 ```
 
-**Do not change this structure.** The build and deployment pipeline depends on `nextjs_space/` being the
-app root.
-
-Codebase size: **366 TypeScript files · ~36,758 lines · 69 pages · 100 API routes · 149 components ·
-31 lib modules · 43 Prisma models · 32 enums**.
+The current checkout is `/Users/mach/dev/nextjs/pax`; `@/` resolves from this root.
+Do not recreate the historical `nextjs_space/` wrapper or move the application to match old documents.
+Preserve the existing structure and inspect configuration before running commands.
 
 ---
 
@@ -104,7 +212,7 @@ Codebase size: **366 TypeScript files · ~36,758 lines · 69 pages · 100 API ro
 
 - TypeScript everywhere. `typescript.ignoreBuildErrors` is **false** — type errors break the build.
   `eslint.ignoreDuringBuilds` is **true** — lint warnings do not.
-- Import alias `@/` maps to `nextjs_space/`.
+- Import alias `@/` maps to the application/repository root.
 - Files: `kebab-case.tsx`. Components: `PascalCase`. Functions and variables: `camelCase`.
   Constants and enum members: `SCREAMING_SNAKE_CASE`.
 - Business logic belongs in `lib/`, never inline in a page or route handler. If a rule is used twice,
@@ -142,11 +250,13 @@ Rules:
 - **Always pass `authOptions`** to `getServerSession`.
 - **Derive `userId` from the session, never from a URL parameter or request body.** Passing a user id in the
   URL is a privilege-escalation bug.
-- Role-gated routes call `hasRole(session.user, 'ADMIN')` from `lib/access.ts` before proceeding.
+- Reuse `requirePermission`/`authorizeUser` from `lib/authorization.ts` and module-specific capability
+  checks. Role checks use `hasRole(primaryRole, additionalRoles, requiredRole)` from `lib/access.ts`;
+  a role check alone does not replace granular resource authorization.
 - Return `401` unauthenticated, `403` authenticated-but-not-permitted, `404` not-found-or-not-yours,
   `400` validation failure, `500` unexpected. Error bodies are `{ error: string }`.
-- Never expose another member's record by id — scope every query by the session user unless the caller is
-  `ADMIN`.
+- Scope queries to authorized ownership, organization, or workspace membership. Access to another
+  member's record requires the appropriate scoped permission, not merely a supplied record ID.
 
 ### 4.4 Client-side conventions
 
@@ -192,26 +302,26 @@ Rules:
 
 ### 5.2 Middleware (`middleware.ts`)
 
-Matcher: `['/dashboard/:path*', '/login', '/register']`.
-
-- Unauthenticated request to `/dashboard/*` → redirect `/login`.
-- Authenticated request to `/login` or `/register` → redirect `/dashboard`.
-
-Adding a new protected area means adding it to this matcher **and** guarding its API routes.
+Middleware handles product hosts, canonical redirects, and private-page routing. Inspect its current
+matcher and protected-path rules before adding an area. Preserve public booking/invitation exceptions,
+legacy redirects, and safe authentication return URLs. Middleware is not a substitute for server-side
+session, permission, and resource checks; revoked sessions must be rejected on the server.
 
 ### 5.3 Roles (`lib/access.ts`)
 
-`PRACTITIONER · INNOVATOR · INVESTOR · EMPLOYER · POLICYMAKER · PATIENT · ADMIN`
+Read `UserRole` and the access helpers for the complete current role set, including Talent `MEMBER`
+and staff roles; do not derive permissions from a historical role inventory.
 
-- **Public sign-up exposes only five**: Practitioner, Innovator, Investor, Employer, Policymaker.
-  `PATIENT` exists only as a Hub clinic record; `ADMIN` is provisioned internally. Never add either to the
-  registration UI.
+- Traditional role selection offers Practitioner, Innovator, Investor, Employer, and Policymaker.
+  Talent enrollment uses `MEMBER` access and must not grant clinical privileges. Never add `PATIENT`
+  or `ADMIN` to public registration; preserve the existing dedicated enrollment flows.
 - Each role has a `UserTypeDef` (`value`, `label`, `shortLabel`, `description`, `icon`, `slug`).
   Registration deep-links as `/register?role=<slug>`.
-- Multi-role support: `userRoles(primary, additional)` de-duplicates; `hasRole(user, role)` is the only
-  permitted check. **`ADMIN` bypasses every role check** — this is intentional.
+- Multi-role support: `userRoles(primary, additional)` de-duplicates; `hasRole(primary, additional, required)`
+  is the shared role helper. Preserve its admin behavior; granular permissions and workspace capabilities
+  are separate checks and must not be bypassed by a new blanket admin shortcut.
 - `homePathForRole()`: `INVESTOR → /investor`, `INNOVATOR → /innovator`, `EMPLOYER → /employer`,
-  `POLICYMAKER → /policymaker`, everything else → `/dashboard`.
+  `POLICYMAKER → /policymaker`, `MEMBER → /talent`, everything else → `/dashboard`.
 
 ### 5.4 Tiers
 
@@ -221,7 +331,7 @@ Adding a new protected area means adding it to this matcher **and** guarding its
 | `TIER2_PROFESSIONAL` | 2 | Professional | Verified Professional | `#F59E0B` |
 | `TIER3_EXPERT` | 3 | Expert | Peer-Vouched Expert | `#8B7FD4` |
 
-Helpers: `hasTier(user, minimum)`, `tierRank(tier)`, `tierLabel(tier)`.
+Helpers: `hasTier(userTier, minimum)`, `tierRank(tier)`, `tierLabel(tier)`.
 `addressRequiredForTier(tier)` returns **true for Professional and above** — physical address, city, postal
 code and country become mandatory fields.
 
@@ -336,8 +446,9 @@ Marketplace categories: `DIRECT_DRUG_SALES`, `B2C_TEST_KITS`, `UNSUBSTANTIATED_C
 `BRIEF_PRICE_CENTS = 99` (USD, displayed `$0.99`).
 `isPilotFree()` returns true unless `BRIEF_PILOT_FREE === 'false'`.
 `isPaymentConfigured()` requires both `PAYSTACK_SECRET_KEY` and `PAYSTACK_PUBLIC_KEY`.
-**Neither key is currently set, so the paywall is dormant and briefs are free.** Do not build checkout UI
-that assumes payment is live.
+Verify pilot and provider configuration in the target environment without exposing values. Do not
+assume payments are live or dormant from this document. Platform billing is separate from marketplace
+product transactions, which remain off-platform.
 
 ### 7.11 Practice Hub finance — `lib/hub-finance.ts`
 
@@ -352,7 +463,8 @@ Payer status: `PENDING`, `PAID`, `OVERDUE`. Invoice status: `DRAFT`, `UNPAID`, `
 
 - Prisma 6.7 against PostgreSQL. A single client instance is exported from `lib/db.ts` — **never instantiate
   a new client anywhere else**.
-- The database is **shared between preview and production**. Treat every write as production data.
+- Verify the actual database target before writes. Local isolated databases exist; historical preview
+  and production shared a database. Treat unidentified or shared targets as production-sensitive.
 - **Schema changes must be additive and backwards-compatible.** New columns are nullable or carry defaults.
   Destructive Prisma flags that reset or drop data require explicit human approval before use.
 - Connection budget is tight: roughly 25 concurrent connections, 5 s statement timeout, 30 s
@@ -362,7 +474,9 @@ Payer status: `PENDING`, `PAID`, `OVERDUE`. Invoice status: `DRAFT`, `UNPAID`, `
   records need adding, edit the existing seed file rather than creating a new one.
 - Avoid `mode: 'insensitive'` / `ILIKE` on indexed enum-like columns — it defeats the B-Tree index.
 
-### 8.1 Models (43)
+### 8.1 Historical model inventory (non-exhaustive)
+
+Inspect `prisma/schema.prisma` for the current models; the original inventory below is retained for context.
 
 `User` `Account` `Session` `VerificationToken` `PractitionerProfile` `Innovation` `Milestone` `Investment`
 `DiligenceItem` `CashFlowEntry` `Endorsement` `GpsEntry` `ChallengeBrief` `ChallengeResponse` `GpsEvidence`
@@ -372,7 +486,7 @@ Payer status: `PENDING`, `PAID`, `OVERDUE`. Invoice status: `DRAFT`, `UNPAID`, `
 `VaultAccessRequest` `MarketplaceVendor` `VendorDocument` `MarketplaceListing` `MarketplaceTransaction`
 `MarketplaceReview` `MarketplaceBuyer` `VerificationRequest` `VerificationDocument`
 
-### 8.2 Enums (32)
+### 8.2 Historical enum inventory (non-exhaustive)
 
 `UserRole` `MembershipTier` `VerificationLevel` `VerificationRequestStatus` `InnovationStage`
 `InnovationStatus` `MilestoneStatus` `InvestmentStatus` `CashFlowType` `DiligenceStatus` `NotificationType`
@@ -401,13 +515,14 @@ Rules:
 - Reference assets by path from the `public/` root, e.g. `/img/pax-mark-color.png`.
 - **Never overwrite a file in `public/` in place.** Browsers and the CDN cache by URL. Write a new filename
   and update every reference, or bump a `?v=N` query on every reference.
-- 19 images are currently shipped. Adding one means adding it to this table.
+- When adding a shipped image, add it to this asset mapping.
 
 ---
 
 ## 10. Components
 
-149 components. **Reuse before you create.**
+**Reuse before you create.** The table below is the original component inventory, not current counts.
+Search the current feature directories, including Practice, Talent, Account, and Profile, before adding UI.
 
 | Directory | Count | Notes |
 |---|---|---|
@@ -462,7 +577,9 @@ Full detail in `DESIGN.md`. The short version:
 `AWS_FOLDER_PREFIX` · `BRIEF_PILOT_FREE`
 
 Injected by the platform: `NEXTAUTH_URL`.
-Not currently set: `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`.
+Provider variables include `PAYSTACK_SECRET_KEY` and `PAYSTACK_PUBLIC_KEY`; verify availability per
+environment without printing values. This list is not exhaustive; inspect configuration and workers
+for current feature, routing, upload, and notification variable names.
 
 ---
 
@@ -481,8 +598,10 @@ Not currently set: `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`.
 
 ## 14. Scheduled Tasks
 
-Four background jobs run outside the app, in Python, from `/home/ubuntu/shared/`. They connect with
-`psycopg2` using `DATABASE_URL` from `/home/ubuntu/shared/.env`.
+The legacy Python jobs live in `shared/` and use `DATABASE_URL`. Current deployment packages workers
+and jobs in the same PAX image. Consult `docs/docker/README.md` and actual scheduler configuration;
+do not assume the historical `/home/ubuntu/shared/` installation or that scheduling is active.
+The following schedules describe the original Python jobs; also inspect TypeScript workers in `scripts/`.
 
 | Script | Schedule (UTC) | Purpose |
 |---|---|---|
@@ -500,6 +619,8 @@ directly and will break silently on a rename.
 
 - Email uses the platform notification API. Each notification type has a registered id exposed as a
   `NOTIF_ID_*` variable. Register a new type before writing code that sends it.
+- Reuse database-managed templates and the existing outbox, provider, retry/dead-letter, and preference
+  handling. Do not send directly from a new code path that bypasses those controls.
 - Do not add SendGrid, Mailgun, Resend or the Gmail API.
 - WhatsApp helpers live in `lib/whatsapp.ts`; the floating action button is in `components/whatsapp/`.
 
@@ -513,7 +634,7 @@ directly and will break silently on a rename.
    grep every usage and preserve existing behaviour for consumers you were not asked to change.
 4. **Run the project test tool, then save a checkpoint.** Both must pass before finishing.
 5. **Verify user-reported bugs by reproducing them**, not by reading code.
-6. Known false positives from the automated test tool, safe to ignore: duplicate `mod-*.jpg` filenames;
+6. Historical test caveats to confirm before classifying a new failure as a false positive: duplicate `mod-*.jpg` filenames;
    an "Ageing CSV" warning on `/dashboard/hub`; a seeded LinkedIn URL returning HTTP 999; an intermittent
    "text not visible" report on framer-motion reveals.
 
@@ -531,4 +652,4 @@ directly and will break silently on a rename.
 
 ---
 
-*PAX Platform — confidential. © 2026 Praxis Exchange. Version 1.0, 12 August 2026.*
+*PAX Platform — confidential. © 2026 Praxis Exchange. Version 1.1, 20 September 2026.*
