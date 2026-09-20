@@ -2,14 +2,18 @@ import { productUrl } from '@/lib/product-hosts';
 
 export type ServiceId = 'home' | 'practice' | 'talent' | 'market' | 'community';
 
+export const SERVICE_PROFILE_PATHS: Record<ServiceId, string> = {
+  home: '/dashboard/profile', practice: '/practice/profile', talent: '/talent/profile', market: '/marketplace/profile', community: '/community/profile',
+};
+
 /** Service destinations share the configured product origins used by authentication. */
 export function serviceLinks() {
   return [
-    { id: 'home' as const, label: 'Home', href: productUrl('main', '/'), profileHref: productUrl('main', '/dashboard/profile') },
-    { id: 'practice' as const, label: 'Practitioner', href: productUrl('practice', '/practice'), profileHref: productUrl('practice', '/practice/profile') },
-    { id: 'talent' as const, label: 'Talent Search', href: productUrl('talent', '/talent'), profileHref: productUrl('talent', '/talent/profile') },
-    { id: 'market' as const, label: 'Market', href: productUrl('main', '/marketplace'), profileHref: productUrl('main', '/marketplace/profile') },
-    { id: 'community' as const, label: 'Pax Exchange', href: productUrl('main', '/community'), profileHref: productUrl('main', '/community/profile') },
+    { id: 'home' as const, label: 'Home', href: productUrl('main', '/'), profileHref: productUrl('main', SERVICE_PROFILE_PATHS.home) },
+    { id: 'practice' as const, label: 'Practitioner', href: productUrl('practice', '/practice'), profileHref: productUrl('practice', SERVICE_PROFILE_PATHS.practice) },
+    { id: 'talent' as const, label: 'Talent Search', href: productUrl('talent', '/talent'), profileHref: productUrl('talent', SERVICE_PROFILE_PATHS.talent) },
+    { id: 'market' as const, label: 'Market', href: productUrl('main', '/marketplace'), profileHref: productUrl('main', SERVICE_PROFILE_PATHS.market) },
+    { id: 'community' as const, label: 'Pax Exchange', href: productUrl('main', '/community'), profileHref: productUrl('main', SERVICE_PROFILE_PATHS.community) },
   ];
 }
 

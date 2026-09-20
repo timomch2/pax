@@ -7,7 +7,7 @@ import { ChevronDown, LogOut, Settings, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProductSwitcher, type ProductsResponse } from '@/components/product-switcher';
-import { serviceForPath } from '@/lib/service-navigation';
+import { serviceForPath, SERVICE_PROFILE_PATHS } from '@/lib/service-navigation';
 import { roleLabel, tierLabel } from '@/lib/access';
 
 /** The account identity is shared; My Profile follows the service currently being used. */
@@ -15,10 +15,11 @@ export function UserMenu() {
   const { data: session } = useSession();
   const pathname = usePathname() ?? '/';
   const { data } = useSWR<ProductsResponse>('/api/products', (url: string) => fetch(url).then(response => response.json()));
-  if (!session?.user || !data) return null;
+  if (!session?.user?.id) return null;
   const user = session.user;
   const firstName = user.name?.trim().split(/\s+/)[0] || 'Account';
-  const service = data.services.find(item => item.id === serviceForPath(pathname));
+  const currentService = serviceForPath(pathname);
+  const service = data?.services?.find(item => item.id === currentService);
 
   return <div className="flex shrink-0 items-center gap-1 sm:gap-2">
     <ProductSwitcher variant="launcher" />
@@ -38,13 +39,13 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="min-h-11 gap-2">
-          <a href={service?.profileHref ?? '/dashboard/profile'}><UserCircle className="h-4 w-4" aria-hidden="true" /><span>My Profile<span className="block text-xs text-muted-foreground">{service?.label}</span></span></a>
+          <a href={service?.profileHref ?? SERVICE_PROFILE_PATHS[currentService]}><UserCircle className="h-4 w-4" aria-hidden="true" /><span>My Profile<span className="block text-xs text-muted-foreground">{service?.label}</span></span></a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="min-h-11 gap-2">
-          <a href={data.accountHref}><Settings className="h-4 w-4" aria-hidden="true" />Account &amp; security</a>
+          <a href={data?.accountHref ?? '/account'}><Settings className="h-4 w-4" aria-hidden="true" />Account &amp; security</a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="min-h-11 gap-2" onSelect={() => { void signOut({ callbackUrl: data.logoutHref }); }}>
+        <DropdownMenuItem className="min-h-11 gap-2" onSelect={() => { void signOut({ callbackUrl: data?.logoutHref ?? '/login' }); }}>
           <LogOut className="h-4 w-4" aria-hidden="true" />Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -29,5 +29,5 @@ New service-profile endpoints derive ownership from the authenticated session, r
 - Unit tests cover canonical destinations, deployment origins, current-service profile selection, authenticated redirects, retained query parameters, profile ownership, field allowlists, and clinical/community persistence isolation.
 - TypeScript, ESLint, and production build are checked.
 - Desktop and 390px browser checks use a temporary synthetic authenticated-session preview, removed afterward. Both header menus, keyboard opening, Escape dismissal, and five service links were inspected.
-- The local logout POST returned 200. Its redirect used the existing authentication server at localhost:3000, whose login page returned 500; the isolated UI preview ran at port 3002. Authentication configuration was not changed. No live account profile saves were performed.
+- A subsequent local demo-account check verified real sign-in, the authenticated homepage menu, and logout back to the login page on localhost:3000. Guest Sign In and Join PAX actions remain visible after session loading on desktop and mobile, including when a stale session has no valid user. Authentication configuration was not changed. No live account profile saves were performed.
 - Work is local on main. Nothing is pushed or deployed.

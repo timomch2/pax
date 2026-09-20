@@ -168,18 +168,18 @@ export function LandingPage() {
             <li><Link href="/contact" className="text-[13px] text-gray-600 no-underline tracking-wide hover:text-[#1F7A74] transition-colors">Contact</Link></li>
           </ul>
           <div className="hidden md:flex items-center gap-3">
-            {session ? (
+            {session?.user?.id ? (
               <UserMenu />
             ) : (
               <>
                 <a
-                  onClick={() => router.push('/login')}
+                  href="/login"
                   className="px-5 py-2.5 border border-black/15 rounded-lg text-[13px] font-medium text-gray-700 bg-transparent no-underline hover:border-[#1F7A74] hover:text-[#1F7A74] transition-all cursor-pointer"
                 >
                   Sign In
                 </a>
                 <a
-                  onClick={() => router.push('/register')}
+                  href="/register"
                   className="px-5 py-2.5 bg-[#1F7A74] border border-[#1F7A74] rounded-lg text-[13px] font-semibold text-white no-underline hover:bg-[#186963] hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(45,155,148,0.4)] transition-all cursor-pointer"
                 >
                   Join PAX — Free
@@ -197,7 +197,7 @@ export function LandingPage() {
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
-        {session?.user && <div className="flex justify-end px-4 pb-2 md:hidden"><UserMenu /></div>}
+        {session?.user?.id && <div className="flex justify-end px-4 pb-2 md:hidden"><UserMenu /></div>}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-black/5 bg-[#FAF8F5] px-6 py-5 shadow-lg">
             <div className="flex flex-col gap-4">
@@ -208,7 +208,7 @@ export function LandingPage() {
               <Link href="/safety" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-700">Safety Hub</Link>
               <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-700">Contact</Link>
               <div className="grid grid-cols-2 gap-3 pt-2">
-                {session ? (
+                {session?.user?.id ? (
                   <button type="button" onClick={() => router.push('/dashboard')} className="col-span-2 rounded-lg bg-[#1F7A74] px-4 py-3 text-sm font-semibold text-white">Dashboard</button>
                 ) : (
                   <>

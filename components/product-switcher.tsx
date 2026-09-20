@@ -25,9 +25,10 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
   const { data } = useSWR<ProductsResponse>("/api/products", (url: string) =>
     fetch(url).then((response) => response.json()),
   );
-  if (!data || (variant === "launcher" ? !session?.user : !data.enabled)) return null;
+  if (!data || (variant === "launcher" ? !session?.user?.id : !data.enabled)) return null;
 
   if (variant === "launcher") {
+    if (!data.services) return null;
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
