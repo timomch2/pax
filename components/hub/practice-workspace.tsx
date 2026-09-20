@@ -3,7 +3,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { PRACTICE_SECTIONS, type PracticeSection } from '@/lib/practice-routes';
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,7 +18,7 @@ import { PracticeReconciliation } from '@/components/hub/practice-reconciliation
 import { PracticeReports } from '@/components/hub/practice-reports';
 import { PracticeFinance } from '@/components/hub/practice-finance';
 
-type Workspace = { id: string; name: string; isOwner: boolean; active: boolean; bookingSlug: string; capabilities: PracticeAction[] };
+export type Workspace = { id: string; name: string; isOwner: boolean; active: boolean; bookingSlug: string; capabilities: PracticeAction[] };
 const facilityFields: PracticeField[] = [
   { name: 'officialName', label: 'Facility name', required: true }, { name: 'countryCode', label: 'Country code (e.g. KE)', value: 'KE', required: true },
   { name: 'county', label: 'County / state', required: true }, { name: 'town', label: 'Town', required: true }, { name: 'subCounty', label: 'Sub-county' },
@@ -49,20 +48,18 @@ export function PracticeWorkspaceView({ section = 'facilities' }: { section?: Pr
     </div>
     {!workspace ? <p>No workspace yet. Practitioners need Professional membership. Staff join through an invitation.</p> : <>
       {!workspace.active && <p role="status" className="rounded-md bg-muted p-4">Your workspace is read-only. You can view and export existing records. Restore Professional membership to resume activity.</p>}
-      <Tabs key={workspace.id} value={section} onValueChange={(value) => navigate(value as PracticeSection, workspace.id)}>
-        <TabsList className="flex h-auto flex-wrap justify-start">
-          {Object.entries(PRACTICE_SECTIONS).map(([key, item]) => (!item.capability || workspace.capabilities.includes(item.capability)) && <TabsTrigger key={key} value={key}>{item.label}</TabsTrigger>)}
-        </TabsList>
+      <div key={workspace.id}>
         {PRACTICE_SECTIONS[section].capability && !workspace.capabilities.includes(PRACTICE_SECTIONS[section].capability!) && <p role="alert" className="py-6 text-muted-foreground">You do not have access to this section of the workspace.</p>}
-        <TabsContent value="facilities"><PracticeFacilities workspace={workspace} /></TabsContent>
-        {workspace.capabilities.includes('patient.read') && <TabsContent value="patients"><PracticePatients workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
-        {workspace.capabilities.includes('calendar.read') && <TabsContent value="calendar"><PracticeCalendar workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
-        {workspace.capabilities.includes('calendar.read') && <TabsContent value="bookings"><PracticeBookings workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
-        {workspace.capabilities.includes('billing.read') && <TabsContent value="finance"><PracticeFinance workspaceId={workspace.id} capabilities={workspace.capabilities} /></TabsContent>}
-        {workspace.capabilities.includes('billing.read') && <TabsContent value="accounts"><PracticeFinance workspaceId={workspace.id} capabilities={workspace.capabilities} initialTab="payers" /></TabsContent>}
-        {workspace.capabilities.includes('report.read') && <TabsContent value="reports"><PracticeReports workspaceId={workspace.id} /></TabsContent>}
-        {workspace.capabilities.includes('team.manage') && <><TabsContent value="team"><PracticeTeam workspace={workspace} /></TabsContent></>}
-      {workspace.capabilities.includes('clinical.read') && <TabsContent value="reconciliation"><PracticeReconciliation workspaceId={workspace.id} writable={workspace.capabilities.includes('billing.approve')} /></TabsContent>}</Tabs>
+        {section === 'facilities' && <PracticeFacilities workspace={workspace} />}
+        {section === 'patients' && workspace.capabilities.includes('patient.read') && <PracticePatients workspaceId={workspace.id} capabilities={workspace.capabilities} />}
+        {section === 'calendar' && workspace.capabilities.includes('calendar.read') && <PracticeCalendar workspaceId={workspace.id} capabilities={workspace.capabilities} />}
+        {section === 'bookings' && workspace.capabilities.includes('calendar.read') && <PracticeBookings workspaceId={workspace.id} capabilities={workspace.capabilities} />}
+        {section === 'finance' && workspace.capabilities.includes('billing.read') && <PracticeFinance workspaceId={workspace.id} capabilities={workspace.capabilities} />}
+        {section === 'accounts' && workspace.capabilities.includes('billing.read') && <PracticeFinance workspaceId={workspace.id} capabilities={workspace.capabilities} initialTab="payers" />}
+        {section === 'reports' && workspace.capabilities.includes('report.read') && <PracticeReports workspaceId={workspace.id} />}
+        {section === 'team' && workspace.capabilities.includes('team.manage') && <PracticeTeam workspace={workspace} />}
+        {section === 'reconciliation' && workspace.capabilities.includes('clinical.read') && <PracticeReconciliation workspaceId={workspace.id} writable={workspace.capabilities.includes('billing.approve')} />}
+      </div>
     </>}
   </div>;
 }

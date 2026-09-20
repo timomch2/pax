@@ -16,6 +16,8 @@ Configured product origins continue to be resolved server-side. Existing Talent 
 
 Workspace sections have stable URLs: `/practice`, `/practice/patients`, `/practice/calendar`, `/practice/bookings`, `/practice/billing`, `/practice/accounts`, `/practice/reports`, `/practice/team`, and `/practice/reconciliation`. The `workspace` query parameter preserves the selected workspace; access still comes from current server-side membership and capabilities. Accounts opens workspace payer accounts.
 
+These sections appear in the Practitioner sidebar, filtered by the selected workspace's capabilities. The current-practitioner selector remains above the page content. Sidebar links retain the selected workspace, highlight the current section, and close the mobile drawer after navigation. Practice Finance and My Profile remain available alongside the workspace sections; accounts without a workspace retain their existing sidebar destinations.
+
 Old `/dashboard/practice`, `/dashboard/patients`, `/dashboard/calendar`, and `/dashboard/billing` links redirect to their Practice equivalents. `/dashboard/hub` and its nested invoice, patient, and insurer URLs redirect to `/practice/finance`, preserving identifiers and query parameters. Legacy clinical screens remain available before workspace cutover. Existing API URLs are unchanged. The public staff invitation URL stays `/practice/invitation`.
 
 ## Profile storage and permissions

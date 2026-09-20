@@ -17,6 +17,26 @@ const evidence = '/tmp/pax-practice-runtime';
 const localTime = (d: Date) => new Date(d.getTime() + 10800000).toISOString().slice(0, 16);
 const dateIn = (days: number) => new Date(Date.now() + days * 86400000 + 10800000).toISOString().slice(0, 10);
 
+async function openPracticeMenu(page: Page) {
+  if (await page.locator('aside').evaluate((sidebar) => sidebar.getBoundingClientRect().right <= 0)) {
+    await page.getByRole('button', { name: 'Open navigation menu', exact: true }).click();
+  }
+  await expect.poll(() => page.locator('aside').evaluate((sidebar) => sidebar.getBoundingClientRect().left)).toBe(0);
+}
+
+async function navigatePractice(page: Page, label: string) {
+  await openPracticeMenu(page);
+  const link = page.locator('aside').getByRole('link', { name: label, exact: true });
+  const destination = new URL((await link.getAttribute('href'))!, page.url());
+  assert.ok(destination.searchParams.get('workspace'), 'Sidebar navigation must retain the selected workspace');
+  await link.click();
+  await expect(page).toHaveURL(destination.href);
+  await expect(link).toHaveAttribute('aria-current', 'page');
+  if ((page.viewportSize()?.width ?? 1024) < 1024) {
+    await expect.poll(() => page.locator('aside').evaluate((sidebar) => sidebar.getBoundingClientRect().right)).toBeLessThanOrEqual(0);
+  }
+}
+
 async function main() {
   await mkdir(evidence, { recursive: true });
   const suffix = randomUUID(), password = `Local-${randomBytes(24).toString('base64url')}!`, hash = await bcrypt.hash(password, 12);
@@ -99,7 +119,12 @@ async function main() {
     await page.waitForURL(/\/practice/, { timeout: 30000 });
     await page.goto(`${origin}/dashboard/practice`);
     await expect(page.getByRole('main').getByRole('heading', { name: 'Practice Workspace', exact: true })).toBeVisible();
-    if (hasWorkspace) await expect(page.getByRole('tab', { name: 'Facilities', exact: true })).toBeVisible();
+    if (hasWorkspace) {
+      await openPracticeMenu(page);
+      await expect(page.locator('aside').getByRole('link', { name: 'Facilities', exact: true })).toBeVisible();
+      await expect(page.getByRole('main').getByRole('tab', { name: 'Facilities', exact: true })).toHaveCount(0);
+      await page.screenshot({ path: `${evidence}/sidebar-${user.role.toLowerCase()}-${mobile ? 'mobile' : 'desktop'}.png` });
+    }
     console.log(`Signed in synthetic ${user.role} account for ${mobile ? 'mobile' : 'desktop'} acceptance.`);
     return page;
   };
@@ -118,7 +143,7 @@ async function main() {
     await expect(page).toHaveURL(`${origin}/practice?workspace=${workspace.id}`);
     assert.equal((await get(page, `${origin}/practice/nonexistent`)).status(), 404);
 
-    await page.getByRole('tab', { name: 'Team', exact: true }).click();
+    await navigatePractice(page, 'Team');
     const invitedEmail = `invited-${suffix}@example.test`;
     await page.getByLabel('Staff email').fill(invitedEmail);
     await page.getByLabel('Workspace access').selectOption('RECEPTION,FINANCE');
@@ -136,10 +161,10 @@ async function main() {
     await expect(invitationPage.getByText('Invitation accepted.', { exact: false })).toBeVisible();
     const invitedUser = await prisma.user.findUniqueOrThrow({ where: { email: invitedEmail } });
     const combinedPage = await login(invitedUser, true);
-    await expect(combinedPage.getByRole('tab', { name: 'Calendar', exact: true })).toBeVisible();
-    await expect(combinedPage.getByRole('tab', { name: 'Billing', exact: true })).toBeVisible();
-    await expect(combinedPage.getByRole('tab', { name: 'Team', exact: true })).toHaveCount(0);
-    await page.getByRole('tab', { name: 'Facilities', exact: true }).click();
+    await expect(combinedPage.locator('aside').getByRole('link', { name: 'Calendar', exact: true })).toBeVisible();
+    await expect(combinedPage.locator('aside').getByRole('link', { name: 'Billing', exact: true })).toBeVisible();
+    await expect(combinedPage.locator('aside').getByRole('link', { name: 'Team', exact: true })).toHaveCount(0);
+    await navigatePractice(page, 'Facilities');
     const facilityName = `Runtime Health Facility ${suffix}`;
     await page.getByRole('button', { name: 'Add a missing facility', exact: true }).click();
     await page.getByLabel('Facility name', { exact: false }).fill(facilityName);
@@ -154,7 +179,7 @@ async function main() {
     await page.getByRole('button', { name: 'Save consulting relationship' }).click();
     await expect(page.getByText('Consulting relationship saved', { exact: true })).toBeVisible();
     const facility = await prisma.healthFacility.findFirstOrThrow({ where: { officialName: facilityName } });
-    await page.getByRole('tab', { name: 'Patients', exact: true }).click();
+    await navigatePractice(page, 'Patients');
     await page.getByRole('button', { name: 'Add patient', exact: true }).click();
     await page.getByLabel('Patient name').fill('Runtime Patient');
     await page.getByLabel('Email', { exact: true }).fill(`patient-${suffix}@example.test`);
@@ -165,7 +190,7 @@ async function main() {
     await page.getByLabel('New clinical note').fill('Private synthetic clinical note for access checks.');
     await page.getByRole('button', { name: 'Add note', exact: true }).click();
     await expect(page.getByText('Private synthetic clinical note for access checks.', { exact: true })).toBeVisible();
-    await page.getByRole('tab', { name: 'Calendar', exact: true }).click();
+    await navigatePractice(page, 'Calendar');
     await page.getByRole('button', { name: 'Add appointment / meeting', exact: true }).click();
     await page.getByLabel(/^Title/).fill('Runtime consultation');
     await page.getByLabel('Patient (patient appointments only)').selectOption(patient.id);
@@ -180,7 +205,7 @@ async function main() {
     await page.getByRole('button', { name: 'Complete', exact: true }).click();
     await expect(page.getByText('Patient appointment · Completed', { exact: false })).toBeVisible();
     await page.screenshot({ path: `${evidence}/practitioner-calendar.png`, fullPage: true });
-    await page.getByRole('tab', { name: 'Billing', exact: true }).click();
+    await navigatePractice(page, 'Billing');
     await page.getByRole('tab', { name: 'Payers', exact: true }).click();
     await page.getByLabel('Payer type').selectOption('PATIENT');
     await page.getByLabel(/^Patient(?: \*)?$/).selectOption(patient.id);
@@ -196,9 +221,9 @@ async function main() {
     await expect(page.getByText(/KSh 500.00/).first()).toBeVisible();
     const download = page.waitForEvent('download'); await page.getByRole('link', { name: 'Download PDF' }).click(); await (await download).saveAs(`${evidence}/invoice.pdf`);
     const financePage = await login(finance, true);
-    await expect(financePage.getByRole('tab', { name: 'Calendar', exact: true })).toHaveCount(0);
-    await expect(financePage.getByRole('tab', { name: 'Team', exact: true })).toHaveCount(0);
-    await financePage.getByRole('tab', { name: 'Billing', exact: true }).click();
+    await expect(financePage.locator('aside').getByRole('link', { name: 'Calendar', exact: true })).toHaveCount(0);
+    await expect(financePage.locator('aside').getByRole('link', { name: 'Team', exact: true })).toHaveCount(0);
+    await navigatePractice(financePage, 'Billing');
     await financePage.getByRole('tab', { name: 'Receipts and credit', exact: true }).click();
     const payer = await prisma.practicePayer.findFirstOrThrow({ where: { workspaceId: workspace.id, patientId: patient.id } });
     await financePage.getByRole('combobox', { name: 'Payer', exact: true }).selectOption(payer.id);
@@ -212,20 +237,20 @@ async function main() {
     await financePage.evaluate(() => window.scrollTo(0, 0));
     await financePage.screenshot({ path: `${evidence}/finance-mobile.png`, fullPage: true });
     assert.equal((await get(financePage, `${origin}/api/practice/${workspace.id}/calendar?from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 86400000).toISOString())}`)).status(), 403);
-    await financePage.getByRole('tab', { name: 'Reports', exact: true }).click();
+    await navigatePractice(financePage, 'Reports');
     await financePage.getByLabel('From date').fill(dateIn(-1));
     await financePage.getByLabel('Through date').fill(dateIn(1));
     await financePage.getByRole('button', { name: 'Run report' }).click();
     await expect(financePage.getByText('Account statement', { exact: true })).toBeVisible();
     const reportDownload = financePage.waitForEvent('download'); await financePage.getByRole('link', { name: 'Download PDF' }).click(); await (await reportDownload).saveAs(`${evidence}/statement.pdf`);
     const receptionPage = await login(reception, true);
-    await expect(receptionPage.getByRole('tab', { name: 'Billing', exact: true })).toHaveCount(0);
-    await receptionPage.getByRole('tab', { name: 'Patients', exact: true }).click();
+    await expect(receptionPage.locator('aside').getByRole('link', { name: 'Billing', exact: true })).toHaveCount(0);
+    await navigatePractice(receptionPage, 'Patients');
     await expect(receptionPage.getByRole('button', { name: 'Clinical notes', exact: true })).toHaveCount(0);
     assert.equal((await get(receptionPage, `${origin}/api/practice/${workspace.id}/documents?kind=invoice&id=${(await prisma.practiceInvoice.findFirstOrThrow({ where: { workspaceId: workspace.id } })).id}`)).status(), 403);
     await receptionPage.evaluate(() => window.scrollTo(0, 0));
     await receptionPage.screenshot({ path: `${evidence}/reception-mobile.png`, fullPage: true });
-    await page.getByRole('tab', { name: 'Booking requests', exact: true }).click();
+    await navigatePractice(page, 'Booking requests');
     await page.getByLabel('Exception date').fill(dateIn(2));
     await page.getByLabel('Location or online').fill('Online');
     await page.getByLabel('Appointment type / service').fill('Consultation');
@@ -250,7 +275,7 @@ async function main() {
     await publicPage.getByRole('button', { name: 'Confirm', exact: true }).click();
     await expect(publicPage.getByText('Email verified. Your request is awaiting approval.', { exact: true })).toBeVisible();
     await publicPage.screenshot({ path: `${evidence}/public-booking-mobile.png`, fullPage: true });
-    await receptionPage.getByRole('tab', { name: 'Booking requests', exact: true }).click();
+    await navigatePractice(receptionPage, 'Booking requests');
     await receptionPage.getByRole('button', { name: 'Review request', exact: true }).click();
     await receptionPage.getByLabel(/^Decision/).selectOption('APPROVE');
     await receptionPage.getByRole('button', { name: 'Save decision', exact: true }).click();

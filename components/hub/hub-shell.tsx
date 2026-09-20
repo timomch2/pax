@@ -14,16 +14,19 @@ export interface HubNavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  activePath?: string;
 }
 
 export function HubShell({
   children,
   navItems,
   roleLabel,
+  closeSidebarOnNavigate = false,
 }: {
   children: React.ReactNode;
   navItems: HubNavItem[];
   roleLabel: string;
+  closeSidebarOnNavigate?: boolean;
 }) {
   const { data: session } = useSession() || {};
   const pathname = usePathname() ?? '';
@@ -50,13 +53,15 @@ export function HubShell({
       <SurfaceSwitcher />
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => {
+          const itemPath = item.activePath ?? item.href.split('?')[0];
           const isActive =
-            pathname === item.href ||
-            (item.href !== navItems[0]?.href && pathname?.startsWith(item.href));
+            pathname === itemPath ||
+            (item.activePath === undefined && item.href !== navItems[0]?.href && pathname?.startsWith(itemPath));
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-primary/10 text-primary'
@@ -91,7 +96,7 @@ export function HubShell({
   const header = (
     <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
       <h1 className="truncate font-display text-lg font-semibold tracking-tight">
-        {navItems.find((n) => n.href === pathname)?.label ?? roleLabel}
+        {navItems.find((n) => (n.activePath ?? n.href.split('?')[0]) === pathname)?.label ?? roleLabel}
       </h1>
       <div className="flex items-center gap-2">
         <NotificationBell />
@@ -101,7 +106,7 @@ export function HubShell({
   );
 
   return (
-    <AppShell sidebar={sidebar} header={header}>
+    <AppShell sidebar={sidebar} header={header} closeSidebarOnNavigate={closeSidebarOnNavigate}>
       {children}
     </AppShell>
   );
