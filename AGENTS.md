@@ -168,8 +168,10 @@ These are architectural and legal constraints. **Do not violate them, even for a
    product. Never introduce such wording.
 4. **Safety data is never public.** Adverse-event and pharmacovigilance signals are visible only to `ADMIN`
    and `POLICYMAKER`. Never surface them on public pages, dashboards or aggregate counters.
-5. **The app is locked to light theme.** `forcedTheme="light"` in `app/layout.tsx`. A `.dark` token block
-   exists in `globals.css` but is unreachable. Do not add dark-mode toggles or dark-only styling.
+5. **Light theme by default; Admin Dashboard has an approved dark palette.** See `DESIGN.md` §3:
+   admin background `#080F18`, green accent `#00C896`. Keep this exception scoped to admin; do not add
+   global dark mode or theme toggles. The existing forced-light runtime needs a separate implementation
+   before the admin palette is active.
 6. **Additive changes only.** Do not delete existing models, fields, routes or components to make a new
    feature simpler. Extend. Removal requires explicit human approval.
 7. **`yarn` only.** Never `npm`, never `npx`. Install from the repository root: `yarn add <pkg>`.
@@ -555,6 +557,11 @@ Rules:
 ## 11. Styling
 
 Full detail in `DESIGN.md`. The short version:
+
+- Approved palette (22 September 2026): Deep Purple `#3D2B7A` — primary brand; Teal `#2ABFB0` — accent,
+  CTAs, highlights; Cream `#F5F0E8` — background/warm neutral. Admin Dashboard: background `#080F18`,
+  green accent `#00C896`. These supersede prior general brand colour assignments, not semantic status
+  meanings or the protected logo lockup. Documentation approval does not mean runtime adoption.
 
 - All colours come from CSS variables in `app/globals.css`, consumed through Tailwind
   (`bg-primary`, `text-muted-foreground`, `border-border`). **Never hardcode a hex** except inside

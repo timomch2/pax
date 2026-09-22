@@ -1,6 +1,6 @@
 # DESIGN.md — PAX Platform Design System
 
-**Version:** 1.0 · **Date:** 12 August 2026
+**Version:** 1.1 · **Date:** 22 September 2026
 Styling and system-design standards for the PAX Platform (Praxis Exchange).
 
 This document is **authoritative**. Where it differs from the original `STYLE_GUIDE.md` template baseline
@@ -15,7 +15,7 @@ This document is **authoritative**. Where it differs from the original `STYLE_GU
 2. **Evidence forward.** Data, scores and endorsements are the hero content. Decoration never competes with
    them.
 3. **Light, warm, breathable.** A cream page surface with white cards, generous whitespace and soft shadows
-   rather than heavy borders.
+   rather than heavy borders. The Admin Dashboard uses the dedicated dark palette in §3.4.
 4. **One focal point per page.** Every screen has a clear primary action or primary reading.
 5. **Mobile-first in practice.** Many users are on phones in the field. Every layout must work beautifully at
    small widths.
@@ -78,7 +78,28 @@ All colours are HSL CSS custom properties declared in `app/globals.css` and mapp
 `tailwind.config.ts` as `hsl(var(--token))`. **Consume them as Tailwind classes** — `bg-primary`,
 `text-muted-foreground`, `border-border`. Never write a hex value in a component.
 
-### 3.1 Core tokens (light — the only active theme)
+### 3.1 Approved brand palette
+
+The following palette was approved on 22 September 2026 and supersedes earlier general brand colour
+assignments in this document. These are design requirements; this documentation update does not
+change runtime CSS, theme configuration, or the protected logo lockup.
+
+| Colour | Exact value | Intended use |
+|---|---|---|
+| Deep Purple | `#3D2B7A` | Primary brand colour |
+| Teal | `#2ABFB0` | Accent, CTAs, highlights |
+| Cream | `#F5F0E8` | Background, warm neutral |
+| Admin Dashboard BG | `#080F18` | Admin Dashboard dark-theme background |
+| Admin Dashboard Accent | `#00C896` | Admin Dashboard green accent |
+
+When implementing this palette, define colours through CSS variables and consume semantic Tailwind
+classes. Keep the admin palette scoped to the Admin Dashboard. Verify readable foreground colours,
+focus states, and contrast for buttons and text; do not assume white text works on teal or green.
+Preserve existing semantic status meanings and the logo component unless separately authorized.
+
+#### Existing light tokens (implementation reference, pending palette adoption)
+
+The table below records the previous token palette; it is not the approved replacement palette.
 
 | Token | HSL | Approx. hex | Use |
 |---|---|---|---|
@@ -117,15 +138,19 @@ Use them in order. Do not introduce ad-hoc chart colours.
 **Credibility bands** (`lib/credibility.ts`): Highly Credible `#2ABFB0` · Established `#FBBF24` ·
 Emerging `#8B7FD4` · New Contributor (neutral).
 
-**Badge conventions:** success uses primary teal, pending uses amber/accent, failure uses destructive, and
-neutral or archived states use muted. Status labels always come from `lib/pax-labels.ts` or
+**Badge conventions:** preserve success, pending (amber), failure (destructive), and
+neutral or archived (muted) meanings when adopting the new brand palette. Status labels always come from `lib/pax-labels.ts` or
 `lib/admin-labels.ts` — never inline text.
 
-### 3.4 Dark theme
+### 3.4 Admin Dashboard dark theme
 
-A complete `.dark` token block exists (background `225 40% 7%`) but is **unreachable**: the root layout sets
-`forcedTheme="light"` with `enableSystem={false}`. Do not build dark-mode-only styling and do not add a
-theme toggle to the UI. The tokens are retained so a future dark mode can be enabled without a rewrite.
+The Admin Dashboard is the approved exception to the light-theme design: use background `#080F18`
+and green accent `#00C896`. Public and other service surfaces retain the light design with the approved
+brand palette. This does not introduce a global dark mode or a user-facing theme toggle.
+
+The existing root layout forces light mode, and the legacy `.dark` block does not implement this new
+admin palette. Applying the admin theme requires a separately scoped UI implementation; do not claim
+it is active merely because these design requirements are documented.
 
 ---
 
@@ -329,7 +354,7 @@ toaster.
 
 - **Contrast is non-negotiable.** Never light text on a light surface. Body text uses `--foreground` on
   `--background` or `--card`; helper text uses `--muted-foreground`, never lighter.
-- Focus is always visible — the `--ring` token in primary teal. Links use an underline on focus rather than
+- Focus is always visible — the semantic `--ring` token with contrast against its surrounding surface. Links use an underline on focus rather than
   a ring.
 - Every interactive element is keyboard reachable and has an accessible name.
 - Icons that carry meaning need a text label or `aria-label`; decorative icons are `aria-hidden`.
