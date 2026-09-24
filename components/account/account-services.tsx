@@ -42,9 +42,10 @@ export function AccountServices({ initialServices, selectedService, userId }: { 
           {service.source && <p className="text-xs text-muted-foreground">{SERVICE_SOURCE_LABEL[service.source]} · Existing access rules</p>}
         </div>
         <div className="mt-auto flex flex-wrap gap-2">
-          {service.state === 'ENABLED' && service.access !== 'UNAVAILABLE' && service.access !== 'ACCOUNT_RESTRICTED' && <Button asChild size="sm"><a href={service.href}>{service.access === 'SETUP_REQUIRED' ? 'Continue setup' : 'Open service'}</a></Button>}
+          {(service.state === 'ENABLED' || service.id === 'safety') && service.canOpen && <Button asChild size="sm"><a href={service.href}>{service.id === 'safety' ? 'Report a concern' : service.access === 'SETUP_REQUIRED' ? 'Continue setup' : 'Open service'}</a></Button>}
           <Button size="sm" variant="outline" disabled={busy !== null || service.access === 'ACCOUNT_RESTRICTED'} onClick={() => void change(service)}>{busy === service.id ? 'Saving…' : service.state === 'ENABLED' ? 'Disable service' : 'Enable service'}</Button>
-          {service.state === 'ENABLED' && <Button asChild size="sm" variant="ghost"><a href={service.profileHref}>Service profile</a></Button>}
+          {service.state === 'ENABLED' && service.profileHref && <Button asChild size="sm" variant="ghost"><a href={service.profileHref}>Service profile</a></Button>}
+          {service.dashboardHref && <Button asChild size="sm" variant="outline"><a href={service.dashboardHref}>Safety dashboard</a></Button>}
         </div>
       </Card>)}
     </div>

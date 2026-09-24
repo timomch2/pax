@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Loader2, Search, Trash2, Stethoscope } from 'lucide-react';
 import { toast } from 'sonner';
+import { SERVICE_CATALOG } from '@/lib/service-navigation';
 import type { ServiceSummary } from '@/lib/service-enrollment';
 import { SERVICE_STATE_LABEL, SERVICE_ACCESS_LABEL } from '@/lib/pax-labels';
 import { ROLE_LABEL, TIER_LABEL } from '@/lib/admin-labels';
@@ -123,7 +124,7 @@ export function AdminUsers() {
       <div className="flex flex-wrap gap-3">
         <Select value={serviceFilter} onValueChange={setServiceFilter}>
           <SelectTrigger className="w-48" aria-label="Filter by service"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="ALL">All services</SelectItem><SelectItem value="practice">Practitioner</SelectItem><SelectItem value="talent">Talent Search</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="community">Pax Exchange</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="ALL">All services</SelectItem>{SERVICE_CATALOG.map(service => <SelectItem key={service.id} value={service.id}>{service.label}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={serviceState} onValueChange={setServiceState} disabled={serviceFilter === 'ALL'}>
           <SelectTrigger className="w-48" aria-label="Filter by service state"><SelectValue /></SelectTrigger>

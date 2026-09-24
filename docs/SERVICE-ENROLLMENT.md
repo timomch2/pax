@@ -4,7 +4,7 @@ The first release tracks service choices without introducing paid plans or chang
 
 ## Account and launcher
 
-`/account` contains My services for Practitioner (`practice`), Talent Search (`talent`), Market (`market`), and Pax Exchange (`community`). Home and Account remain core navigation. Users enable or disable services themselves. Unenabled launcher entries lead to the matching account card; enabled entries retain their existing product-origin destinations. Profiles remain service-specific.
+`/account` contains My services for Medical Practitioner (`practice`), Talent Marketplace (`talent`), Product Marketplace (`market`), Knowledge Exchange (`community`), Innovation Hub (`innovation`), Investment Platform (`investment`), and Pharmacovigilance (`safety`). Home and Account remain core navigation. Users enable or disable services themselves. Unenabled launcher entries lead to the matching account card; enabled entries retain their existing product-origin destinations when accessible. Innovation and Investment entries without the required role show access details in Accounts. Pharmacovigilance links directly to reporting regardless of enrollment. Profiles remain service-specific.
 
 Enrollment is a preference in this release. Disabling does not revoke workspace membership, delete data, cancel billing, or prevent direct access permitted by existing authorization. The UI states this explicitly. Administrators inspect enrollment and workspace status in `/admin/users` and filter by service, enrollment state and workspace access status. Admin service suspension is intentionally not offered until service authorization is enforced consistently.
 
@@ -32,7 +32,7 @@ yarn services:backfill --apply
 yarn services:backfill
 ```
 
-The dry run reports aggregate candidate counts, without names or contact data. Evidence is a practitioner profile/workspace/current team membership, Talent candidate/hiring profile/current team membership, market buyer/vendor registration, or authored debate/contribution/stance. Global roles, tiers, and public browsing are not evidence. Source `LEGACY` means imported from existing service records; `enabledAt` is the time tracking began, not an invented historical signup date. Existing disabled records are preserved. Rerunning safely discovers service records created through legacy direct-entry flows; those flows retain their existing access behavior in this tracking release.
+The dry run reports aggregate candidate counts, without names or contact data. Evidence is a practitioner profile/workspace/current team membership, Talent candidate/hiring profile/current team membership, market buyer/vendor registration, authored debate/contribution/stance, owned innovation, investor mandate, investment, or vault access request. Safety is never backfilled from report history. Global roles, tiers, and public browsing are not evidence. Source `LEGACY` means imported from existing service records; `enabledAt` is the time tracking began, not an invented historical signup date. Existing disabled records are preserved. Rerunning safely discovers service records created through legacy direct-entry flows; those flows retain their existing access behavior in this tracking release.
 
 Only the local `pax_dev` database was migrated and backfilled during implementation. No remote database or deployment was changed.
 
@@ -61,3 +61,5 @@ yarn tsx tests/runtime/service-enrollment.ts
 ```
 
 The runtime check creates and removes only its own synthetic accounts, checks session ownership, cross-origin rejection, concurrency/audit behavior, persisted toggles, launcher destinations, responsive layout, admin filtering and restricted-account denial. It does not send emails or call payment providers.
+
+The seven-service extension requires migration `20260924090000_seven_services` before its application release. It preserves existing service keys and disabled choices. Public service metadata contains no safety records or counters.

@@ -138,18 +138,20 @@ PAX (Praxis Exchange) is a public-health innovation platform connecting practiti
 investors, employers and policymakers. It is **evidence-first**: every claim a member makes is backed by a
 structured, endorsed record rather than a self-declared CV line.
 
-Eight functional modules are implemented:
+PAX has seven user-facing services, with existing implementations at different stages of readiness:
 
-| Module | Purpose |
+| Service | Purpose |
 |---|---|
-| GPS (Growth & Practice Signature) | Structured, endorsed record of a practitioner's real-world work |
-| Innovation Vault | Innovator submissions, IP timestamping, controlled investor access |
-| Investment Desk | Investor mandates, deterministic opportunity matching, portfolio & diligence |
-| Knowledge & Consensus Briefs | Moderated expert debates distilled into purchasable consensus briefs |
-| Practice Hub | Clinic operations: patients, appointments, invoices, insurers, payer tracking |
-| Safety & Pharmacovigilance | Adverse drug reports, product feedback, signal detection, surveillance |
-| Marketplace | Vendor listings for health products/services — **PAX never transacts** |
-| Talent & Employer | Employer roles, verified talent search, credibility-ranked candidates |
+| Knowledge Exchange | Debates, consensus briefs and knowledge products; unpublished papers are coming soon |
+| Innovation Hub | Innovation submissions, IP timestamping and controlled investor access |
+| Talent Marketplace | Evidence portfolios, jobs, applications and hiring |
+| Medical Practitioner | Practice workspaces, patients, appointments, facilities and finance |
+| Product Marketplace | Vendor listings for health products/services — **PAX never transacts** |
+| Investment Platform | Investor mandates, opportunity matching, portfolio and diligence |
+| Pharmacovigilance | Public reporting with reports and signals restricted to authorized administrators and policymakers |
+
+GPS (Growth & Practice Signature) and credibility scoring are shared evidence capabilities, not an eighth service.
+Home and Accounts are shared infrastructure. Enrollment is independent of authorization.
 
 ---
 

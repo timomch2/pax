@@ -37,7 +37,7 @@ from structured records of real work, endorsed by named people whose relationshi
 
 ## 2. Implemented Modules
 
-All eight modules below are **built and running**.
+PAX has **seven user-facing services**: Knowledge Exchange, Innovation Hub, Talent Marketplace, Medical Practitioner, Product Marketplace, Investment Platform and Pharmacovigilance. GPS and the credibility engine are shared evidence capabilities, not additional services. The implementation inventory below describes existing foundations, not production-readiness certification. Unpublished papers have a Coming soon page at `/knowledge/papers`.
 
 ### GPS — Growth & Practice Signature
 Structured entries across five entry types (formal role, community initiative, research/policy, volunteer,

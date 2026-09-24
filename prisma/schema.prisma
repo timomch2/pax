@@ -3067,6 +3067,9 @@ enum ServiceKey {
   talent
   market
   community
+  innovation
+  investment
+  safety
 }
 
 enum ServiceEnrollmentState {

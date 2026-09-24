@@ -206,7 +206,7 @@ export const modulesData: ModuleData[] = [
     slug: 'practitioners-hub',
     num: '06',
     emoji: '🏥',
-    title: 'Practitioners Hub',
+    title: 'Medical Practitioner',
     tagline: 'Your Practice, Powered by PAX',
     color: '#F59E0B',
     heroDescription:
@@ -240,7 +240,7 @@ export const modulesData: ModuleData[] = [
     slug: 'community-debate-hub',
     num: '07',
     emoji: '⚖️',
-    title: 'PAX Exchange Community & Debate Hub',
+    title: 'Knowledge Exchange',
     tagline: 'Validation → Connection → Commercialisation',
     color: '#8B7FD4',
     heroDescription:

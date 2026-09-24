@@ -107,7 +107,7 @@ export function CommunityHub() {
           <Scale className="mt-1 h-7 w-7 shrink-0 text-[#8B7FD4]" />
           <div>
             <h1 className="font-display text-2xl font-bold md:text-3xl">
-              PAX Exchange Community &amp; Debate Hub
+              Knowledge Exchange
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
               The daily pulse of PAX — where health professionals worldwide validate innovations,

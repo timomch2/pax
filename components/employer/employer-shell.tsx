@@ -8,8 +8,8 @@ const navItems = [
   { href: '/employer/roles', label: 'Post & Manage Roles', icon: Megaphone },
   { href: '/employer/talent', label: 'Browse Talent', icon: Users },
   { href: '/employer/profile', label: 'Organisation Profile', icon: UserCircle },
-  { href: '/community', label: 'PAX Exchange Community & Debate Hub', icon: Scale },
-  { href: '/marketplace', label: 'Marketplace', icon: Store },
+  { href: '/community', label: 'Knowledge Exchange', icon: Scale },
+  { href: '/marketplace', label: 'Product Marketplace', icon: Store },
 ];
 
 export function EmployerShell({ children }: { children: React.ReactNode }) {

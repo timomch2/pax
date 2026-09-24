@@ -34,14 +34,13 @@ function Eyebrow({ color, children, center = false }: { color: string; children:
 }
 
 const MODULE_SLIDES = [
-  { title: 'GPS Profiles', line: 'Turn frontline experience into documented, peer-endorsed evidence using our Gap → Problem → Solution method.', img: '/img/mod-gps.jpg?v=3', color: '#1F7A74', slug: 'gps-profiles' },
   { title: 'Innovation Hub', line: 'Showcase your innovation, track its milestones, and get matched to the investors who fund your stage.', img: '/img/mod-innovation.jpg?v=3', color: '#B26F09', slug: 'innovation-hub' },
   { title: 'Talent Marketplace', line: 'Find verified public health professionals — or be found for the work that fits your skills.', img: '/img/mod-talent.jpg?v=3', color: '#6A5CBF', slug: 'talent-marketplace' },
   { title: 'Product Marketplace', line: 'Source and supply health products and technologies through a transparent, peer-reviewed marketplace.', img: '/img/mod-marketplace.jpg?v=3', color: '#C81E1E', slug: 'product-marketplace' },
-  { title: 'Investment Platform', line: 'AI scores every innovation against your mandate, so capital reaches the ideas that actually fit it.', img: '/img/mod-investment.jpg?v=3', color: '#15908A', slug: 'investment-platform' },
-  { title: 'Practitioners Hub', line: 'Run your entire practice — invoicing, patients, reminders and finances — free, in one place.', img: '/img/mod-practice.jpg?v=3', color: '#3F5FB0', slug: 'practitioners-hub' },
-  { title: 'Community & Debate Hub', line: 'Structured, evidence-backed debate that turns professional argument into publishable consensus briefs.', img: '/img/mod-community.jpg?v=3', color: '#6A5CBF', slug: 'community-debate-hub' },
-  { title: 'Safety & Feedback Hub', line: 'Anyone can report a drug side effect or review a health product — no account, no barrier.', img: '/img/mod-safety.jpg?v=3', color: '#C81E1E', slug: null },
+  { title: 'Investment Platform', line: 'Deterministic matching scores innovations against your mandate, so capital reaches the ideas that actually fit it.', img: '/img/mod-investment.jpg?v=3', color: '#15908A', slug: 'investment-platform' },
+  { title: 'Medical Practitioner', line: 'Run your entire practice — invoicing, patients, reminders and finances — free, in one place.', img: '/img/mod-practice.jpg?v=3', color: '#3F5FB0', slug: 'practitioners-hub' },
+  { title: 'Knowledge Exchange', line: 'Structured, evidence-backed debate that turns professional argument into publishable consensus briefs.', img: '/img/mod-community.jpg?v=3', color: '#6A5CBF', slug: 'community-debate-hub' },
+  { title: 'Pharmacovigilance', line: 'Anyone can report a drug side effect or review a health product — no account, no barrier.', img: '/img/mod-safety.jpg?v=3', color: '#C81E1E', slug: null },
 ];
 
 function ModuleCarousel() {
@@ -471,23 +470,22 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Seven Dimensions (compact) ─── */}
+      {/* ─── Seven Services (compact) ─── */}
       <section className="py-24 px-6 md:px-12 bg-[#FFFFFF]" id="platform">
         <div className="max-w-[1200px] mx-auto">
           <motion.div {...fadeUp} className="mb-16">
             <Eyebrow color="#B26F09">The Platform</Eyebrow>
             <h2 className="font-display text-[clamp(2rem,4vw,3rem)] font-semibold text-[#1A2332] leading-tight">
-              Seven <em className="text-[#1F7A74] font-semibold not-italic">Dimensions</em> of Impact
+              Seven <em className="text-[#1F7A74] font-semibold not-italic">Services</em> of Impact
             </h2>
             <p className="text-[15px] text-gray-500 leading-relaxed max-w-[560px] mt-4">
-              Each dimension connects to the others. Your GPS profile feeds the Innovation Hub.
-              Debates inform investor decisions. Marketplace transactions build your credibility.
-              It&apos;s one interconnected ecosystem.
+              Seven services share one PAX identity. GPS evidence supports Innovation Hub and Talent Marketplace.
+              Knowledge Exchange informs innovation and investment, while clinical and safety records retain their own access rules.
             </p>
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {[
-              { img: '/img/mod-gps.jpg?v=3', num: '01', title: 'GPS Profiles', slug: 'gps-profiles', desc: 'Document evidence-based solutions using our Gap → Problem → Solution methodology.', color: '#1F7A74' },
+              { img: '/img/mod-safety.jpg?v=3', num: '01', title: 'Pharmacovigilance', slug: null, desc: 'Report drug side effects and product concerns, with restricted review by authorized administrators and policymakers.', color: '#1F7A74' },
               { img: '/img/mod-innovation.jpg?v=3', num: '02', title: 'Innovation Hub', slug: 'innovation-hub', desc: 'Showcase groundbreaking public health innovations at every development stage.', color: '#B26F09' },
               { img: '/img/mod-talent.jpg?v=3', num: '03', title: 'Talent Marketplace', slug: 'talent-marketplace', desc: 'Connect skilled professionals with organisations that need their expertise.', color: '#6A5CBF' },
               { img: '/img/mod-marketplace.jpg?v=3', num: '04', title: 'Product Marketplace', slug: 'product-marketplace', desc: 'Source and supply health products, tools, and technologies across the continent.', color: '#C81E1E' },
@@ -496,7 +494,7 @@ export function LandingPage() {
                 key={dim.title}
                 {...fadeUp}
                 transition={{ delay: i * 0.08 }}
-                onClick={() => router.push(`/modules/${dim.slug}`)}
+                onClick={() => router.push(dim.slug ? `/modules/${dim.slug}` : '/safety')}
                 style={{ borderColor: `${dim.color}33`, boxShadow: `0 6px 22px ${dim.color}18` }}
                 className="relative overflow-hidden border rounded-2xl bg-white group hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
               >
@@ -515,15 +513,15 @@ export function LandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { img: '/img/mod-investment.jpg?v=3', num: '05', title: 'Investment Platform', slug: 'investment-platform', desc: 'AI-powered matching connects investors with innovations ready for funding and scale.', color: '#1F7A74' },
-              { img: '/img/mod-practice.jpg?v=3', num: '06', title: 'Practitioners Hub', slug: 'practitioners-hub', desc: 'Manage your practice — billing, patients, reminders, and financial insights in one place.', color: '#B26F09' },
-              { img: '/img/mod-community.jpg?v=3', num: '07', title: 'PAX Exchange Community & Debate Hub', slug: 'community-debate-hub', desc: 'Structured debates, peer endorsement, and consensus briefs — the qualitative evidence engine.', color: '#6A5CBF' },
+              { img: '/img/mod-investment.jpg?v=3', num: '05', title: 'Investment Platform', slug: 'investment-platform', desc: 'Evidence-based matching connects investors with innovations ready for funding and scale.', color: '#1F7A74' },
+              { img: '/img/mod-practice.jpg?v=3', num: '06', title: 'Medical Practitioner', slug: 'practitioners-hub', desc: 'Manage your practice — billing, patients, reminders, and financial insights in one place.', color: '#B26F09' },
+              { img: '/img/mod-community.jpg?v=3', num: '07', title: 'Knowledge Exchange', slug: 'community-debate-hub', desc: 'Structured debates, peer endorsement, and consensus briefs — the qualitative evidence engine.', color: '#6A5CBF' },
             ].map((dim, i) => (
               <motion.div
                 key={dim.title}
                 {...fadeUp}
                 transition={{ delay: i * 0.08 }}
-                onClick={() => router.push(`/modules/${dim.slug}`)}
+                onClick={() => router.push(dim.slug ? `/modules/${dim.slug}` : '/safety')}
                 style={{ borderColor: `${dim.color}33`, boxShadow: `0 6px 22px ${dim.color}18` }}
                 className="relative overflow-hidden border rounded-2xl bg-white group hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
               >

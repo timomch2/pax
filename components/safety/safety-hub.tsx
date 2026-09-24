@@ -50,7 +50,7 @@ const WHY = [
     Icon: BarChart3,
     color: '#6A5CBF',
     title: 'Individual reports become patterns',
-    body: 'One report of a rash is an anecdote. Forty reports of the same rash, on the same molecule, from the same three counties, is a safety signal. PAX groups reports by drug, batch, geography and severity so that patterns surface early — and then puts those patterns in front of the people who regulate, prescribe and supply.',
+    body: 'One report of a rash is an anecdote. Forty reports of the same rash, on the same molecule, from the same three counties, is a safety signal. PAX groups reports by drug, batch, geography and severity so that patterns surface early — and then makes those patterns available only to authorized PAX administrators and policymakers.',
   },
   {
     Icon: Bell,
@@ -64,7 +64,7 @@ const JOURNEY = [
   { Icon: FileCheck, title: 'You submit', body: 'Takes two to four minutes. Only the drug or product name and what happened are required — everything else helps but is optional.', color: '#C81E1E' },
   { Icon: Lock, title: 'It is de-identified', body: 'Your name is never required. If you leave an email it is used only to acknowledge the report, and is never published or shared with a manufacturer.', color: '#B26F09' },
   { Icon: BarChart3, title: 'It is analysed', body: 'The report joins the surveillance database and is scored for severity, then clustered with similar reports by molecule, batch, region and patient group.', color: '#6A5CBF' },
-  { Icon: Siren, title: 'Signals are escalated', body: 'When a cluster crosses a threshold it is flagged in the quarterly surveillance summary that goes to practitioners, institutions and regulators.', color: '#1F7A74' },
+  { Icon: Siren, title: 'Signals are escalated', body: 'When a cluster crosses a threshold it is flagged for review by authorized PAX administrators and policymakers.', color: '#1F7A74' },
 ];
 
 const FAQ = [
@@ -90,7 +90,7 @@ const FAQ = [
   },
   {
     q: 'Who sees my report?',
-    a: 'De-identified reports are visible to the PAX safety team and, in aggregated form, to verified practitioners, institutions and policymakers through the surveillance dashboard and the quarterly summary. Raw reports with contact details are never published.',
+    a: 'Reports and surveillance signals are restricted to authorized PAX administrators and policymakers. They are not available to the public or to other members. Reports and contact details are never published.',
   },
 ];
 

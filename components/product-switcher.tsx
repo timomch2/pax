@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { BriefcaseBusiness, Grip, House, Stethoscope, Store, MessagesSquare } from "lucide-react";
+import { BriefcaseBusiness, Grip, House, Stethoscope, Store, MessagesSquare, Lightbulb, TrendingUp, ShieldCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { ServiceSummary } from "@/lib/service-enrollment";
 import { serviceFetcher } from "@/components/account/account-services";
@@ -11,11 +11,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 type ProductLink = { label: string; href: string };
 
-const SERVICE_ICONS = { home: House, practice: Stethoscope, talent: BriefcaseBusiness, market: Store, community: MessagesSquare };
+const SERVICE_ICONS = { home: House, practice: Stethoscope, talent: BriefcaseBusiness, market: Store, community: MessagesSquare, innovation: Lightbulb, investment: TrendingUp, safety: ShieldCheck };
 export type ProductsResponse = {
   enabled: boolean;
   links: ProductLink[];
-  services: (ProductLink & { id: ServiceId; profileHref: string })[];
+  services: (ProductLink & { id: ServiceId; profileHref: string | null })[];
   accountHref: string;
   logoutHref: string;
 };
@@ -57,19 +57,20 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
             {data.services.map((link) => {
               const Icon = SERVICE_ICONS[link.id];
               const service = enrollment?.services.find(item => item.id === link.id);
-              const href = link.id === "home" || service?.state === "ENABLED" ? link.href : `${data.accountHref}?service=${link.id}#my-services`;
+              const href = link.id === "home" || link.id === "safety" || (service?.state === "ENABLED" && service.canOpen) ? link.href : `${data.accountHref}?service=${link.id}#my-services`;
               return (
                 <a
                   key={link.id}
                   href={href}
                   onClick={() => setOpen(false)}
-                  className="flex flex-col items-center gap-3 rounded-xl px-1 py-4 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:underline focus-visible:outline-none"
+                  className="flex flex-col items-center gap-3 rounded-xl text-center px-1 py-4 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:underline focus-visible:outline-none"
                 >
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   {link.label}
-                  {service && service.state !== "ENABLED" && <span className="text-[10px] font-normal text-muted-foreground">Enable service</span>}
+                  {service?.state === "ENABLED" && !service.canOpen && <span className="text-[10px] font-normal text-muted-foreground">Access details</span>}
+                  {service && link.id !== "safety" && service.state !== "ENABLED" && <span className="text-[10px] font-normal text-muted-foreground">Enable service</span>}
                 </a>
               );
             })}

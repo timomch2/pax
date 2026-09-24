@@ -16,7 +16,7 @@ const navItems = [
   { href: '/marketplace/vendor', label: 'Vendor Dashboard', icon: ShoppingBag },
   { href: '/marketplace/profile', label: 'My Profile', icon: UserCircle },
   { href: '/marketplace/buyer', label: 'Buyer Profile', icon: ClipboardList },
-  { href: '/community', label: 'PAX Exchange Community & Debate Hub', icon: Scale },
+  { href: '/community', label: 'Knowledge Exchange', icon: Scale },
 ];
 
 export function MarketplaceShell({ children }: { children: React.ReactNode }) {

@@ -12,7 +12,7 @@ const navItems = [
   { href: '/admin/innovations', label: 'Innovations', icon: Lightbulb },
   { href: '/admin/investments', label: 'Investments', icon: TrendingUp },
   { href: '/admin/challenges', label: 'Challenges', icon: Megaphone },
-  { href: '/community', label: 'PAX Exchange Community & Debate Hub', icon: Scale },
+  { href: '/community', label: 'Knowledge Exchange', icon: Scale },
   { href: '/admin/moderation', label: 'Moderation', icon: Flag },
   { href: '/admin/marketplace', label: 'Marketplace', icon: Store },
   { href: '/admin/vault', label: 'Vault & NDA', icon: Lock },

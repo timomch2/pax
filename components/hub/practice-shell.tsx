@@ -38,5 +38,5 @@ export function PracticeShell({ children }: { children: React.ReactNode }) {
     // Keep legacy finance subpages highlighted without matching other workspace sections.
     activePath: item.href === '/practice/finance' ? undefined : item.href,
   })));
-  return <HubShell navItems={navItems} roleLabel="Practitioner" closeSidebarOnNavigate>{children}</HubShell>;
+  return <HubShell navItems={navItems} roleLabel="Medical Practitioner" closeSidebarOnNavigate>{children}</HubShell>;
 }

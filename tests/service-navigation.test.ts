@@ -12,9 +12,10 @@ test('service links follow deployment origins and select the current service pro
   process.env.PAX_PRODUCT_ROUTING_ENABLED = 'false';
   try {
     assert.deepEqual(serviceLinks().map(item => [item.label, item.href]), [
-      ['Home', '/'], ['Practitioner', '/practice'], ['Talent Search', '/talent'], ['Market', '/marketplace'], ['Pax Exchange', '/community'],
+      ['Home', '/'], ['Medical Practitioner', '/practice'], ['Talent Marketplace', '/talent'], ['Product Marketplace', '/marketplace'], ['Knowledge Exchange', '/community'],
+      ['Innovation Hub', '/innovator'], ['Investment Platform', '/investor'], ['Pharmacovigilance', '/safety'],
     ]);
-    for (const [path, expected] of [['/practice/accounts', 'practice'], ['/talent/profile', 'talent'], ['/marketplace/vendor', 'market'], ['/community/profile', 'community'], ['/knowledge/example', 'community'], ['/marketplace-other', 'home']]) assert.equal(serviceForPath(path), expected);
+    for (const [path, expected] of [['/practice/accounts', 'practice'], ['/talent/profile', 'talent'], ['/marketplace/vendor', 'market'], ['/community/profile', 'community'], ['/knowledge/example', 'community'], ['/marketplace-other', 'home'], ['/innovator/submit', 'innovation'], ['/investor/mandate', 'investment'], ['/safety', 'safety'], ['/admin/safety', 'safety'], ['/policymaker/safety', 'safety'], ['/investor-other', 'home']]) assert.equal(serviceForPath(path), expected);
     process.env.PAX_PRODUCT_ROUTING_ENABLED = 'true';
     assert.equal(serviceLinks().find(item => item.id === 'practice')!.href, serviceLinks()[0].href.replace(/\/$/, '') + '/practice');
   } finally { if (previous === undefined) delete process.env.PAX_PRODUCT_ROUTING_ENABLED; else process.env.PAX_PRODUCT_ROUTING_ENABLED = previous; }
@@ -91,4 +92,8 @@ test('Practice uses the root domain without taking over the public homepage', as
     assert.equal(safeReturnUrl(legacyPracticeOrigin().replace('https://', 'https://user@') + '/practice', origins.accounts), origins.accounts + '/hub');
     assert.equal((await request('https://unknown.example/practice')).status, 400);
   } finally { if (previous === undefined) delete process.env.PAX_PRODUCT_ROUTING_ENABLED; else process.env.PAX_PRODUCT_ROUTING_ENABLED = previous; }
+});
+
+test('services without dedicated profiles do not advertise profile links', () => {
+  for (const id of ['innovation', 'investment', 'safety']) assert.equal(serviceLinks().find(s => s.id === id)?.profileHref, null);
 });

@@ -10,12 +10,7 @@ export function GET() {
     accountHref: productUrl("accounts", "/account"),
     logoutHref: productUrl("accounts", "/login"),
     links: [
-      { label: "PAX", href: productUrl("main", "/") },
-      {
-        label: "Practitioners",
-        href: productUrl("practice", "/practice"),
-      },
-      { label: "Talent", href: productUrl("talent", "/talent") },
+      ...serviceLinks().map(({ label, href }) => ({ label, href })),
       { label: "Account", href: productUrl("accounts", "/account") },
     ],
   });

@@ -8,8 +8,8 @@ const navItems = [
   { href: '/policymaker/safety', label: 'Safety Signals', icon: ShieldAlert },
   { href: '/policymaker/debates', label: 'Open Calls & Debates', icon: MessagesSquare },
   { href: '/policymaker/profile', label: 'Profile', icon: UserCircle },
-  { href: '/community', label: 'PAX Exchange Community & Debate Hub', icon: Scale },
-  { href: '/marketplace', label: 'Marketplace', icon: Store },
+  { href: '/community', label: 'Knowledge Exchange', icon: Scale },
+  { href: '/marketplace', label: 'Product Marketplace', icon: Store },
 ];
 
 export function PolicymakerShell({ children }: { children: React.ReactNode }) {

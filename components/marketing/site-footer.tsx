@@ -1,20 +1,13 @@
+import { SERVICE_CATALOG } from '@/lib/service-navigation';
 import Link from 'next/link';
 import { PaxLogo } from '@/components/brand/pax-logo';
 
 type Item = { label: string; href: string };
 
-export const MODULE_LINKS: Item[] = [
-  { label: 'GPS Profiles', href: '/modules/gps-profiles' },
-  { label: 'Innovation Hub', href: '/modules/innovation-hub' },
-  { label: 'Talent Marketplace', href: '/modules/talent-marketplace' },
-  { label: 'Product Marketplace', href: '/modules/product-marketplace' },
-  { label: 'Investment Platform', href: '/modules/investment-platform' },
-  { label: 'Practitioners Hub', href: '/modules/practitioners-hub' },
-  { label: 'Community & Debate Hub', href: '/modules/community-debate-hub' },
-  { label: 'Safety & Feedback Hub', href: '/safety' },
-];
+export const MODULE_LINKS: Item[] = SERVICE_CATALOG.map(service => ({ label: service.label, href: service.overviewPath }));
 
 const EXPLORE: Item[] = [
+  { label: 'GPS — shared evidence', href: '/modules/gps-profiles' },
   { label: 'About PAX', href: '/about' },
   { label: 'Why PAX', href: '/#why' },
   { label: 'What is PAX', href: '/#what-is-pax' },
@@ -73,7 +66,7 @@ export function SiteFooter() {
               </p>
             </div>
             <Column title="Explore" items={EXPLORE} accent="#1F7A74" />
-            <Column title="Modules" items={MODULE_LINKS} accent="#B26F09" />
+            <Column title="Services" items={MODULE_LINKS} accent="#B26F09" />
             <Column title="Safety & Trust" items={TRUST} accent="#C81E1E" />
             <Column title="Get Started" items={ACCOUNT} accent="#6A5CBF" />
           </div>

@@ -18,7 +18,7 @@ async function main() {
         if (apply) await prisma.userService.upsert({
           where: { userId_serviceKey: { userId: user.id, serviceKey } },
           update: {},
-          create: { userId: user.id, serviceKey, source: 'LEGACY', events: { create: { action: 'BACKFILLED', reason: 'Existing service profile, workspace membership or community participation' } } },
+          create: { userId: user.id, serviceKey, source: 'LEGACY', events: { create: { action: 'BACKFILLED', reason: 'Existing service profile, workspace membership, community participation, innovation or investment record' } } },
         });
       }
     }

@@ -1,10 +1,11 @@
 import { Prisma, ServiceKey } from '@prisma/client';
 import { prisma } from '@/lib/db';
+import { hasRole } from '@/lib/access';
 import { serviceLinks } from '@/lib/service-navigation';
 import { productUrl, talentEnabled } from '@/lib/product-hosts';
 import { practiceMembershipActive } from '@/lib/practice-policy';
 
-export const SERVICE_KEYS = ['practice', 'talent', 'market', 'community'] as const;
+export const SERVICE_KEYS = ['practice', 'talent', 'market', 'community', 'innovation', 'investment', 'safety'] as const;
 export function isServiceKey(value: unknown): value is ServiceKey {
   return typeof value === 'string' && SERVICE_KEYS.includes(value as ServiceKey);
 }
@@ -21,7 +22,8 @@ export const serviceAccountSelect = Prisma.validator<Prisma.UserSelect>()({
   talentMemberships: { where: { revokedAt: null }, select: { hiringProfile: { select: { owner: { select: { accountStatus: true } } } } } },
   marketplaceVendor: { select: { id: true, status: true, licenseExpiryDate: true } },
   marketplaceBuyer: { select: { id: true, status: true } },
-  _count: { select: { debatesInitiated: true, debateContributions: true, debateStances: true } },
+  investorMandate: { select: { id: true } },
+  _count: { select: { innovations: true, investments: true, vaultAccessRequests: true, debatesInitiated: true, debateContributions: true, debateStances: true } },
 });
 export type ServiceAccount = Prisma.UserGetPayload<{ select: typeof serviceAccountSelect }>;
 
@@ -31,6 +33,9 @@ export function existingServiceEvidence(user: ServiceAccount): Record<ServiceKey
     practice: Boolean(user.practitionerProfile || user.practiceWorkspace || user.practiceMemberships.length),
     talent: Boolean(user.talentProfile || user.talentHiringProfiles.length || user.talentMemberships.length),
     market: Boolean(user.marketplaceVendor || user.marketplaceBuyer),
+    innovation: user._count.innovations > 0,
+    investment: Boolean(user.investorMandate || user._count.investments || user._count.vaultAccessRequests),
+    safety: false, // Never infer a preference from confidential reporting history.
     community: Boolean(user._count.debatesInitiated || user._count.debateContributions || user._count.debateStances),
   };
 }
@@ -42,30 +47,46 @@ export function serviceAccountSummary(user: ServiceAccount, availability = { pra
     const key = link.id as ServiceKey;
     const enrollment = user.services.find(row => row.serviceKey === key);
     let access: 'ACTIVE' | 'SETUP_REQUIRED' | 'LIMITED' | 'UNAVAILABLE' | 'ACCOUNT_RESTRICTED' = 'ACTIVE';
+    let canOpen = true;
+    let dashboardHref: string | null = null;
     let reason = 'Current permissions and verification rules apply.';
     if (key === 'practice') {
       const teamActive = user.practiceMemberships.some(member => member.roles.length && practiceMembershipActive(member.workspace.owner));
       if (!availability.practice) { access = 'UNAVAILABLE'; reason = 'The practitioner workspace is not currently available.'; }
-      else if (!user.practiceWorkspace && !teamActive) { access = 'SETUP_REQUIRED'; reason = 'Open Practitioner to check eligibility and set up a workspace, or accept a team invitation.'; }
+      else if (!user.practiceWorkspace && !teamActive) { access = 'SETUP_REQUIRED'; reason = 'Open Medical Practitioner to check eligibility and set up a workspace, or accept a team invitation.'; }
       else if (!teamActive && !practiceMembershipActive(user)) { access = 'LIMITED'; reason = 'Your existing workspace has read-only access under the current membership rules.'; }
     }
     if (key === 'talent') {
       const teamActive = user.talentMemberships.some(member => member.hiringProfile.owner.accountStatus === 'ACTIVE');
-      if (!availability.talent) { access = 'UNAVAILABLE'; reason = 'Talent Search is not currently available.'; }
+      if (!availability.talent) { access = 'UNAVAILABLE'; reason = 'Talent Marketplace is not currently available.'; }
       else if (!user.emailVerified) { access = 'SETUP_REQUIRED'; reason = 'Verify your email before using Talent workspace features.'; }
       else if (!user.talentProfile && !user.talentHiringProfiles.length && !teamActive) { access = 'SETUP_REQUIRED'; reason = 'Create your candidate or hiring profile, or accept a team invitation.'; }
     }
     if (key === 'market') {
-      if (!evidence.market) { access = 'SETUP_REQUIRED'; reason = 'Browse Market or register a buyer or vendor profile to use its workspace.'; }
+      if (!evidence.market) { access = 'SETUP_REQUIRED'; reason = 'Browse Product Marketplace or register a buyer or vendor profile to use its workspace.'; }
       else if ((user.marketplaceVendor && (user.marketplaceVendor.status !== 'APPROVED' || (user.marketplaceVendor.licenseExpiryDate && user.marketplaceVendor.licenseExpiryDate < now))) || (user.marketplaceBuyer && user.marketplaceBuyer.status !== 'VERIFIED')) {
-        access = 'LIMITED'; reason = 'Some marketplace features require buyer verification or a current approved vendor licence. Browse Market or open your service profile for details.';
+        access = 'LIMITED'; reason = 'Some marketplace features require buyer verification or a current approved vendor licence. Browse Product Marketplace or open your service profile for details.';
       } else { reason = 'Buyer and vendor approval and licence rules apply independently. Purchases take place with vendors.'; }
     }
+    if (key === 'innovation' || key === 'investment') {
+      const requiredRole = key === 'innovation' ? 'INNOVATOR' : 'INVESTOR';
+      if (!hasRole(user.role, user.additionalRoles, requiredRole)) {
+        access = 'LIMITED'; canOpen = false;
+        reason = `An ${key === 'innovation' ? 'innovator' : 'investor'} role is required to open this workspace. Enabling this service does not grant that role. Contact support if you need access.`;
+      }
+    }
+    if (key === 'safety') {
+      reason = 'Report a drug side effect or product concern. Reports and signals are restricted to authorized administrators and policymakers.';
+      // Match the existing safety APIs, which accept these primary roles only.
+      if (user.role === 'ADMIN') dashboardHref = productUrl('main', '/admin/safety');
+      else if (user.role === 'POLICYMAKER') dashboardHref = productUrl('main', '/policymaker/safety');
+    }
     if (user.accountStatus !== 'ACTIVE') { access = 'ACCOUNT_RESTRICTED'; reason = 'Your account is restricted. Contact support for assistance.'; }
+    if (access === 'UNAVAILABLE' || access === 'ACCOUNT_RESTRICTED') { canOpen = false; dashboardHref = null; }
     return {
       ...link, id: key, state: enrollment?.state ?? 'NOT_ENABLED', source: enrollment?.source ?? null,
       enabledAt: enrollment?.enabledAt.toISOString() ?? null, disabledAt: enrollment?.disabledAt?.toISOString() ?? null,
-      access, reason, setupComplete: access === 'ACTIVE' || access === 'LIMITED',
+      access, reason, canOpen, dashboardHref, setupComplete: canOpen && (access === 'ACTIVE' || access === 'LIMITED'),
       accessSource: 'EXISTING_RULES' as const,
       manageHref: productUrl('accounts', `/account?service=${key}#my-services`),
     };

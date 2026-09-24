@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: '/about', label: 'About' },
   { href: '/#what-is-pax', label: 'What is PAX' },
   { href: '/#platform', label: 'Platform' },
-  { href: '/safety', label: 'Safety Hub' },
+  { href: '/safety', label: 'Pharmacovigilance' },
   { href: '/membership', label: 'Membership' },
   { href: '/contact', label: 'Contact' },
 ];

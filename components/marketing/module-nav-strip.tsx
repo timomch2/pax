@@ -1,19 +1,12 @@
 'use client';
 
 import { ProductSwitcher } from '@/components/product-switcher';
+import { SERVICE_CATALOG } from '@/lib/service-navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const MODULES = [
-  { label: 'GPS Profiles', href: '/modules/gps-profiles', color: '#1F7A74' },
-  { label: 'Innovation Hub', href: '/modules/innovation-hub', color: '#B26F09' },
-  { label: 'Talent Marketplace', href: '/modules/talent-marketplace', color: '#6A5CBF' },
-  { label: 'Product Marketplace', href: '/modules/product-marketplace', color: '#C81E1E' },
-  { label: 'Investment Platform', href: '/modules/investment-platform', color: '#1F7A74' },
-  { label: 'Practitioners Hub', href: '/modules/practitioners-hub', color: '#B26F09' },
-  { label: 'Community & Debate', href: '/modules/community-debate-hub', color: '#6A5CBF' },
-  { label: 'Safety Hub', href: '/safety', color: '#C81E1E' },
-];
+const SERVICE_COLORS = { practice: '#B26F09', talent: '#6A5CBF', market: '#C81E1E', community: '#6A5CBF', innovation: '#B26F09', investment: '#1F7A74', safety: '#C81E1E' };
+const MODULES = SERVICE_CATALOG.map(service => ({ label: service.label, href: service.overviewPath, color: SERVICE_COLORS[service.id] }));
 
 export function ModuleNavStrip() {
   const pathname = usePathname();
@@ -23,7 +16,7 @@ export function ModuleNavStrip() {
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
         <ProductSwitcher />
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-2">
-          <span className="text-[10px] font-bold tracking-[1.5px] uppercase text-gray-400 mr-2 flex-shrink-0 hidden sm:block">Modules</span>
+          <span className="text-[10px] font-bold tracking-[1.5px] uppercase text-gray-400 mr-2 flex-shrink-0 hidden sm:block">Services</span>
           {MODULES.map((m) => {
             const active = pathname === m.href || (m.href !== '/safety' && pathname?.startsWith(m.href));
             return (

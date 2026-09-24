@@ -21,6 +21,8 @@ export function UserMenu() {
   const currentService = serviceForPath(pathname);
   const service = data?.services?.find(item => item.id === currentService);
 
+  const profileHref = service?.profileHref ?? SERVICE_PROFILE_PATHS[currentService];
+
   return <div className="flex shrink-0 items-center gap-1 sm:gap-2">
     <ProductSwitcher variant="launcher" />
     <DropdownMenu>
@@ -38,9 +40,9 @@ export function UserMenu() {
           <p className="text-xs font-normal text-muted-foreground">{roleLabel(user.role)}{user.tier ? ` · ${tierLabel(user.tier)}` : ''}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="min-h-11 gap-2">
-          <a href={service?.profileHref ?? SERVICE_PROFILE_PATHS[currentService]}><UserCircle className="h-4 w-4" aria-hidden="true" /><span>My Profile<span className="block text-xs text-muted-foreground">{service?.label}</span></span></a>
-        </DropdownMenuItem>
+        {profileHref && <DropdownMenuItem asChild className="min-h-11 gap-2">
+          <a href={profileHref}><UserCircle className="h-4 w-4" aria-hidden="true" /><span>My Profile<span className="block text-xs text-muted-foreground">{service?.label}</span></span></a>
+        </DropdownMenuItem>}
         <DropdownMenuItem asChild className="min-h-11 gap-2">
           <a href={data?.accountHref ?? '/account'}><Settings className="h-4 w-4" aria-hidden="true" />Account &amp; security</a>
         </DropdownMenuItem>

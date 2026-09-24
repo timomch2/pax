@@ -5,13 +5,13 @@ import { existingServiceEvidence, isServiceKey, serviceAccountSummary, type Serv
 function account(overrides: Partial<ServiceAccount> = {}): ServiceAccount {
   return { id: 'member', accountStatus: 'ACTIVE', role: 'PRACTITIONER', additionalRoles: [], tier: 'TIER2_PROFESSIONAL', hubMember: true,
     emailVerified: new Date('2026-01-01'), services: [], practitionerProfile: null, practiceWorkspace: null, practiceMemberships: [],
-    talentProfile: null, talentHiringProfiles: [], talentMemberships: [], marketplaceVendor: null, marketplaceBuyer: null,
-    _count: { debatesInitiated: 0, debateContributions: 0, debateStances: 0 }, ...overrides };
+    talentProfile: null, talentHiringProfiles: [], talentMemberships: [], marketplaceVendor: null, marketplaceBuyer: null, investorMandate: null,
+    _count: { innovations: 0, investments: 0, vaultAccessRequests: 0, debatesInitiated: 0, debateContributions: 0, debateStances: 0 }, ...overrides };
 }
 const availability = { practice: true, talent: true };
 test('backfill requires service evidence, never a global role or tier', () => {
-  assert.deepEqual(existingServiceEvidence(account()), { practice: false, talent: false, market: false, community: false });
-  assert.deepEqual(existingServiceEvidence(account({ practitionerProfile: { id: 'profile' }, marketplaceVendor: { id: 'vendor', status: 'PENDING', licenseExpiryDate: null }, talentProfile: { userId: 'member' }, _count: { debatesInitiated: 0, debateContributions: 1, debateStances: 0 } })), { practice: true, talent: true, market: true, community: true });
+  assert.deepEqual(existingServiceEvidence(account()), { practice: false, talent: false, market: false, community: false, innovation: false, investment: false, safety: false });
+  assert.deepEqual(existingServiceEvidence(account({ practitionerProfile: { id: 'profile' }, marketplaceVendor: { id: 'vendor', status: 'PENDING', licenseExpiryDate: null }, talentProfile: { userId: 'member' }, _count: { innovations: 0, investments: 0, vaultAccessRequests: 0, debatesInitiated: 0, debateContributions: 1, debateStances: 0 } })), { practice: true, talent: true, market: true, community: true, innovation: false, investment: false, safety: false });
   assert.equal(isServiceKey('home'), false);
   assert.equal(isServiceKey('__proto__'), false);
 });
@@ -54,4 +54,48 @@ test('disabled enrollment stays disabled even when an existing workspace is acti
   assert.equal(practice.state, 'DISABLED');
   assert.equal(practice.access, 'ACTIVE');
   assert.equal(practice.source, 'LEGACY');
+});
+
+
+test('seven services preserve role boundaries even after enabling', () => {
+  const now = new Date('2026-09-24');
+  const member = account({ role: 'MEMBER', services: ['innovation', 'investment'].map(serviceKey => ({ id: serviceKey, userId: 'member', serviceKey: serviceKey as 'innovation' | 'investment', state: 'ENABLED', source: 'SELF', enabledAt: now, disabledAt: null, createdAt: now, updatedAt: now })) });
+  const summary = serviceAccountSummary(member, availability);
+  assert.equal(summary.length, 7);
+  for (const id of ['innovation', 'investment']) {
+    const service = summary.find(s => s.id === id)!;
+    assert.equal(service.state, 'ENABLED');
+    assert.equal(service.access, 'LIMITED');
+    assert.equal(service.canOpen, false);
+    assert.equal(service.setupComplete, false);
+  }
+  for (const [id, role] of [['innovation', 'INNOVATOR'], ['investment', 'INVESTOR']] as const) {
+    assert.equal(serviceAccountSummary(account({ role }), availability).find(s => s.id === id)?.canOpen, true);
+    assert.equal(serviceAccountSummary(account({ additionalRoles: [role] }), availability).find(s => s.id === id)?.canOpen, true);
+  }
+});
+
+test('Pharmacovigilance exposes reporting but only existing authorized dashboard destinations', () => {
+  for (const role of ['MEMBER', 'PRACTITIONER', 'INNOVATOR', 'INVESTOR', 'EMPLOYER'] as const) {
+    const service = serviceAccountSummary(account({ role }), availability).find(s => s.id === 'safety')!;
+    assert.equal(service.canOpen, true);
+    assert.equal(service.dashboardHref, null);
+    assert.equal(service.profileHref, null);
+  }
+  for (const [role, path] of [['ADMIN', '/admin/safety'], ['POLICYMAKER', '/policymaker/safety']] as const) {
+    assert.ok(serviceAccountSummary(account({ role }), availability).find(s => s.id === 'safety')?.dashboardHref?.endsWith(path));
+  }
+  assert.equal(serviceAccountSummary(account({ additionalRoles: ['POLICYMAKER'] }), availability).find(s => s.id === 'safety')?.dashboardHref, null);
+  assert.ok(serviceAccountSummary(account({ role: 'ADMIN', accountStatus: 'SUSPENDED' }), availability).every(s => !s.canOpen && !s.dashboardHref));
+});
+
+test('new backfill evidence uses actual innovation or investment records and never safety data', () => {
+  const user = account();
+  user._count.innovations = 1;
+  user._count.vaultAccessRequests = 1;
+  assert.equal(existingServiceEvidence(user).innovation, true);
+  assert.equal(existingServiceEvidence(user).investment, true);
+  assert.equal(existingServiceEvidence(user).safety, false);
+  assert.equal(existingServiceEvidence(account({ investorMandate: { id: 'mandate' } })).investment, true);
+  for (const key of ['innovation', 'investment', 'safety']) assert.equal(isServiceKey(key), true);
 });
