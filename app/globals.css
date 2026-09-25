@@ -2,8 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (max-width: 1023px) {
+  body:has(.pax-app-shell) .pax-contact-fab {
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+
 @layer base {
   :root {
+    --home-welcome-start: #160e33;
+    --home-welcome-end: #3a2450;
+    --home-workspace: #f7be2d;
     /* Light cream theme matching the public PAX site */
     --background: 40 33% 97%;      /* #FAF8F5 */
     --foreground: 218 32% 15%;     /* #1A2332 */
@@ -148,4 +157,13 @@
   .cta-gradient {
     background: linear-gradient(135deg, #1a1545 0%, #2e2859 50%, #1a1545 100%);
   }
+  .home-welcome {
+    background: linear-gradient(135deg, var(--home-welcome-start), var(--home-welcome-end));
+  }
+  .home-workspace-link {
+    background: var(--home-workspace);
+    color: var(--home-welcome-start);
+  }
+  .home-feed-section h2, .home-feed-title { color: var(--home-welcome-start); }
+  .home-feed-description { color: color-mix(in srgb, var(--home-welcome-start) 75%, transparent); }
 }

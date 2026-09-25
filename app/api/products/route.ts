@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export function GET() {
   return NextResponse.json({
     enabled: talentEnabled(),
+    homeHref: productUrl('main', '/dashboard/feed'),
     services: serviceLinks(),
     accountHref: productUrl("accounts", "/account"),
     logoutHref: productUrl("accounts", "/login"),

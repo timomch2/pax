@@ -92,7 +92,7 @@ function ModuleCarousel() {
               className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[10px] font-bold tracking-[2px] uppercase text-white mb-4"
               style={{ background: slide.color }}
             >
-              {String(index + 1).padStart(2, '0')} · Module
+              {String(index + 1).padStart(2, '0')} / {MODULE_SLIDES.length}
             </span>
             <h3 className="font-display text-[clamp(1.7rem,3.4vw,2.6rem)] font-semibold text-white leading-tight mb-3">{slide.title}</h3>
             <p className="text-[15px] md:text-[17px] text-white/95 leading-relaxed mb-6">{slide.line}</p>
@@ -254,13 +254,13 @@ export function LandingPage() {
             </p>
             <div className="flex flex-wrap items-center gap-4 mb-14">
               <a
-                onClick={() => router.push('/register')}
+                href="/register"
                 className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#FBBF24] rounded-full text-[15px] font-bold text-[#12403C] no-underline shadow-[0_10px_30px_rgba(251,191,36,0.35)] hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(251,191,36,0.45)] transition-all cursor-pointer"
               >
                 Get Started <ArrowRight className="w-4 h-4" />
               </a>
               <a
-                onClick={() => router.push('/login')}
+                href="/login"
                 className="px-8 py-3.5 border border-white/45 rounded-full text-[15px] font-medium text-white no-underline hover:bg-white hover:text-[#12403C] transition-all cursor-pointer"
               >
                 Sign In
@@ -269,7 +269,7 @@ export function LandingPage() {
             <div className="flex items-center gap-8 md:gap-14">
               {[
                 { n: '8', l: 'Health Sectors' },
-                { n: '7', l: 'Dimensions' },
+                { n: '7', l: 'Services' },
                 { n: '∞', l: 'Potential' },
               ].map((st) => (
                 <div key={st.l} className="flex flex-col">
@@ -288,7 +288,7 @@ export function LandingPage() {
           <motion.div {...fadeUp} className="mb-12 max-w-[760px]">
             <Eyebrow color="#1F7A74">What is PAX</Eyebrow>
             <h2 className="font-display text-[clamp(2rem,4vw,3rem)] font-semibold text-[#1A2332] leading-tight mb-5">
-              One ecosystem. <span className="text-[#1F7A74]">Eight working modules.</span>
+              One ecosystem. <span className="text-[#1F7A74]">Seven services.</span>
             </h2>
             <p className="text-[15px] md:text-base text-gray-600 leading-relaxed">
               PAX — the Praxis Exchange — is a single platform where everyone in public health finds
@@ -389,7 +389,7 @@ export function LandingPage() {
               {
                 Icon: Lightbulb, title: 'Innovation Showcase', href: '/modules/innovation-hub', img: '/img/mod-innovation.jpg?v=3',
                 objective: 'Provide innovators a platform to present their solutions, track milestones, and connect with aligned investors.',
-                benefits: ['List your innovation with milestones & evidence', 'AI-matched to investors whose mandates fit your stage', 'Track interest, expressions, and introductions'],
+                benefits: ['List your innovation with milestones & evidence', 'Matched to investors whose mandates fit your stage', 'Track interest, expressions, and introductions'],
                 color: '#B26F09',
               },
               {
@@ -412,8 +412,8 @@ export function LandingPage() {
               },
               {
                 Icon: TrendingUp, title: 'Investment Matching', href: '/modules/investment-platform', img: '/img/mod-investment.jpg?v=3',
-                objective: 'Use AI to connect investors with innovations that match their mandate, geography, and stage criteria.',
-                benefits: ['Set your investment mandate and geography', 'AI scores every innovation against your criteria', 'Request introductions — no middleman fees'],
+                objective: 'Connect investors with innovations that match their mandate, geography, and stage criteria.',
+                benefits: ['Set your investment mandate and geography', 'Matching scores every innovation against your criteria', 'Request introductions — no middleman fees'],
                 color: '#B26F09',
               },
               {
@@ -483,45 +483,21 @@ export function LandingPage() {
               Knowledge Exchange informs innovation and investment, while clinical and safety records retain their own access rules.
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               { img: '/img/mod-safety.jpg?v=3', num: '01', title: 'Pharmacovigilance', slug: null, desc: 'Report drug side effects and product concerns, with restricted review by authorized administrators and policymakers.', color: '#1F7A74' },
               { img: '/img/mod-innovation.jpg?v=3', num: '02', title: 'Innovation Hub', slug: 'innovation-hub', desc: 'Showcase groundbreaking public health innovations at every development stage.', color: '#B26F09' },
               { img: '/img/mod-talent.jpg?v=3', num: '03', title: 'Talent Marketplace', slug: 'talent-marketplace', desc: 'Connect skilled professionals with organisations that need their expertise.', color: '#6A5CBF' },
               { img: '/img/mod-marketplace.jpg?v=3', num: '04', title: 'Product Marketplace', slug: 'product-marketplace', desc: 'Source and supply health products, tools, and technologies across the continent.', color: '#C81E1E' },
-            ].map((dim, i) => (
-              <motion.div
-                key={dim.title}
-                {...fadeUp}
-                transition={{ delay: i * 0.08 }}
-                onClick={() => router.push(dim.slug ? `/modules/${dim.slug}` : '/safety')}
-                style={{ borderColor: `${dim.color}33`, boxShadow: `0 6px 22px ${dim.color}18` }}
-                className="relative overflow-hidden border rounded-2xl bg-white group hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
-              >
-                <div className="relative h-36 overflow-hidden">
-                  <Image src={dim.img} alt={dim.title} fill sizes="320px" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${dim.color}E6 0%, ${dim.color}40 55%, transparent 100%)` }} />
-                  <span className="absolute top-3 right-3 text-[11px] font-bold text-white tracking-[1.5px] px-2.5 py-1 rounded-full" style={{ background: 'rgba(10,26,24,0.72)' }}>{dim.num}</span>
-                </div>
-                <div className="p-6">
-                  <div className="font-semibold text-sm text-[#1A2332] mb-2">{dim.title}</div>
-                  <div className="text-[13px] text-gray-600 leading-relaxed">{dim.desc}</div>
-                  <div className="mt-4 h-0.5 w-8 rounded-full opacity-40 group-hover:opacity-100 group-hover:w-16 transition-all" style={{ background: dim.color }} />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
               { img: '/img/mod-investment.jpg?v=3', num: '05', title: 'Investment Platform', slug: 'investment-platform', desc: 'Evidence-based matching connects investors with innovations ready for funding and scale.', color: '#1F7A74' },
               { img: '/img/mod-practice.jpg?v=3', num: '06', title: 'Medical Practitioner', slug: 'practitioners-hub', desc: 'Manage your practice — billing, patients, reminders, and financial insights in one place.', color: '#B26F09' },
               { img: '/img/mod-community.jpg?v=3', num: '07', title: 'Knowledge Exchange', slug: 'community-debate-hub', desc: 'Structured debates, peer endorsement, and consensus briefs — the qualitative evidence engine.', color: '#6A5CBF' },
             ].map((dim, i) => (
-              <motion.div
+              <motion.a
                 key={dim.title}
                 {...fadeUp}
                 transition={{ delay: i * 0.08 }}
-                onClick={() => router.push(dim.slug ? `/modules/${dim.slug}` : '/safety')}
+                href={dim.slug ? `/modules/${dim.slug}` : '/safety'}
                 style={{ borderColor: `${dim.color}33`, boxShadow: `0 6px 22px ${dim.color}18` }}
                 className="relative overflow-hidden border rounded-2xl bg-white group hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
               >
@@ -535,7 +511,7 @@ export function LandingPage() {
                   <div className="text-[13px] text-gray-600 leading-relaxed">{dim.desc}</div>
                   <div className="mt-4 h-0.5 w-8 rounded-full opacity-40 group-hover:opacity-100 group-hover:w-16 transition-all" style={{ background: dim.color }} />
                 </div>
-              </motion.div>
+              </motion.a>
             ))}
           </div>
         </div>
@@ -560,7 +536,7 @@ export function LandingPage() {
               {
                 img: '/img/aud-innovator.jpg?v=3', title: 'Innovators & Researchers',
                 tagline: 'Get your solution seen, funded, and adopted.',
-                perks: ['Showcase innovations with milestone tracking', 'AI-matched to aligned investors automatically', 'Protect IP with the secure NDA Vault', 'Build a credibility score through peer debate'],
+                perks: ['Showcase innovations with milestone tracking', 'Matched to aligned investors automatically', 'Protect IP with the secure NDA Vault', 'Build a credibility score through peer debate'],
                 color: '#1F7A74',
               },
               {
@@ -572,7 +548,7 @@ export function LandingPage() {
               {
                 img: '/img/aud-investor.jpg?v=3', title: 'Investors & Funders',
                 tagline: 'Find the innovation that matches your impact thesis.',
-                perks: ['Set your mandate — geography, sector, stage, ticket size', 'AI match scoring ranks every innovation against your criteria', 'Request direct introductions — no broker fees', 'Access due diligence data and consensus briefs'],
+                perks: ['Set your mandate — geography, sector, stage, ticket size', 'Match scoring ranks every innovation against your criteria', 'Request direct introductions — no broker fees', 'Access due diligence data and consensus briefs'],
                 color: '#B26F09',
               },
               {

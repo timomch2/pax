@@ -3,14 +3,13 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { homePathForRole } from '@/lib/access';
+import { productUrl } from '@/lib/product-hosts';
 
-// Role-aware entry point after login. Routes each user to their home surface.
+// Shared Home after login; individual workspaces retain their role-aware destinations.
 export default async function HubPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect('/login');
   }
-  const role = (session.user as any).role;
-  redirect(homePathForRole(role));
+  redirect(productUrl('main', '/dashboard/feed'));
 }

@@ -23,7 +23,7 @@ export function WhatsAppFab() {
   ];
 
   return (
-    <div className="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3">
+    <div className="pax-contact-fab fixed bottom-5 right-5 z-30 flex flex-col items-end gap-3">
       {open && (
         <div className="w-[260px] rounded-2xl border border-white/10 bg-[#141B2D] shadow-2xl overflow-hidden">
           <div className="bg-[#25D366] px-4 py-3">

@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layouts/app-shell';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
+  House,
   Calendar,
   Users,
   Users2,
@@ -26,8 +27,11 @@ import { NotificationBell } from '@/components/hub/notification-bell';
 import { SurfaceSwitcher } from '@/components/hub/surface-switcher';
 import useSWR from 'swr';
 import { roleLabel } from '@/lib/access';
+import type { ProductsResponse } from '@/components/product-switcher';
 
 const navItems = [
+  { href: '/dashboard/feed', label: 'Home', icon: House, permission: null },
+  { href: '/talent', label: 'Talent Marketplace', icon: Briefcase, permission: 'talent.job.read' },
   { href: '/practice', label: 'Practice Workspace', icon: Wallet, permission: 'practice.read' },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.read' },
   { href: '/practice/calendar', label: 'Calendar', icon: Calendar, permission: 'hub.appointment.read' },
@@ -51,13 +55,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
   const router = useRouter();
   const { data: capabilityData } = useSWR('/api/auth/capabilities', fetchCapabilities);
+  const { data: products } = useSWR<ProductsResponse>('/api/products', (url: string) => fetch(url).then(response => response.json()));
   const permissions = new Set<string>(capabilityData?.permissions ?? []);
-  const visibleNav = navItems.filter((item) => permissions.has(item.permission));
+  const visibleNav = navItems.filter((item) => !item.permission || permissions.has(item.permission));
   const requestedItem = [...navItems]
     .sort((left, right) => right.href.length - left.href.length)
     .find((item) => pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`)));
   const accessResolved = capabilityData !== undefined;
-  const canViewRequestedPage = !requestedItem || permissions.has(requestedItem.permission);
+  const canViewRequestedPage = !requestedItem?.permission || permissions.has(requestedItem.permission);
 
   const sidebar = (
     <>
@@ -80,12 +85,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <SurfaceSwitcher />
       <nav className="flex flex-1 flex-col gap-1">
-        {visibleNav.map((item: any) => {
+        {visibleNav.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href === '/talent' ? products?.services.find(service => service.id === 'talent')?.href || item.href : item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-primary/10 text-primary'
@@ -120,7 +126,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const header = (
     <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
       <h1 className="truncate font-display text-lg font-semibold tracking-tight">
-        {navItems.find((n: any) => n.href === pathname)?.label ?? 'Dashboard'}
+        {navItems.find((n) => n.href === pathname)?.label ?? 'Dashboard'}
       </h1>
       <div className="flex items-center gap-2">
         <NotificationBell />
@@ -132,7 +138,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AppShell sidebar={sidebar} header={header}>
+    <AppShell sidebar={sidebar} header={header} closeSidebarOnNavigate>
       {!accessResolved ? (
         <div className="py-12 text-center text-sm text-muted-foreground" role="status">Checking access…</div>
       ) : canViewRequestedPage ? children : (

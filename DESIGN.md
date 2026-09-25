@@ -248,12 +248,16 @@ Defined in `app/globals.css`:
 
 ### Gradient utilities
 
+The client UI integration also uses a scoped Home welcome gradient (`--home-welcome-start`
+`#160E33` to `--home-welcome-end` `#3A2450`) and workspace action `#F7BE2D`, matching the
+client reference. These Home tokens do not replace the approved general brand palette.
+
 | Utility | Definition | Use |
 |---|---|---|
 | `.hero-gradient` | Three stacked radial gradients — teal 15%, teal 8%, purple 6% | Landing and marketing hero backgrounds on the cream page |
 | `.cta-gradient` | `linear-gradient(135deg, #1a1545 0%, #2e2859 50%, #1a1545 100%)` | Deep call-to-action bands. Always pair with the white logo and light text |
 
-These are the only two gradients in the system. Do not invent more.
+Use these shared gradients or the reference-matched Home tokens above. Do not invent more.
 
 ---
 
