@@ -48,8 +48,8 @@ This is a file inventory, not an assertion that every workflow was tested.
 
 Live inspection completed the homepage, practitioner calendar/patients/Talent profile surfaces,
 innovator workspace/submission first step, and Investor Manifesto gate. Employer, policymaker,
-CHW, student and administrator live journeys remain incomplete because Brave's extension UI
-interrupted further login. Source access remains available. No legal declarations were accepted,
+CHW, student and administrator live journeys remain incomplete. Earlier Brave interruptions
+were recoverable on 28 September; Employer inspection resumed as recorded below. Source access remains available. No legal declarations were accepted,
 clinical records changed, or client-site forms submitted beyond authorized demo sign-in.
 
 ## Verification record
@@ -62,3 +62,30 @@ locally. The final source-alignment refinements were rebuilt and verified in the
 
 No migration, push or deployment is part of this UI pass. This document records partial progress,
 not full seven-service UI parity or production readiness.
+
+## Talent presentation checkpoint — 28 September 2026
+
+- Talent's existing sidebar now uses the client's icon-row spacing, active-page treatment and
+  keyboard focus indication. Exact and nested routes highlight their own section; job details
+  belong to Find jobs. The protected logo, shared shell and Accounts destinations are retained.
+- Job result cards use the client's compact typography, description, location metadata and hover
+  treatment, retaining local apply/save controls and explainable match results. Empty results use
+  the client's dashed panel treatment. No networking counters or disconnected controls were added.
+- No API, authorization, schema, profile visibility or service enrollment behavior changed.
+
+Verification: 47 tests, lint, production build, sequential typecheck and diff checks passed.
+The rebuilt normal localhost preview passed desktop (1280px) and mobile (390px) inspection,
+keyboard link activation, active-page attributes, drawer closure after navigation and anonymous
+profile-to-login redirection with the return URL preserved. Mobile content did not overflow.
+The local database had no published jobs, so populated-card visual verification and authenticated
+save/apply journeys were not repeated in this checkpoint. Background RSC prefetch requests for
+private pages logged fetch failures; direct navigation reached login correctly. No server exception
+was observed; the preview emitted the existing missing NEXTAUTH_URL warning. These are limitations,
+not a claim of an error-free browser run. No records or environment settings were changed.
+
+Additional client inspection: Employer demo sign-in, Home, Employer overview, role management,
+the unsaved Post a Challenge Brief dialog and Organisation Profile. Client role management uses
+challenge briefs (title, organisation, health area, geography, deadline, problem and desired response),
+while its Organisation Profile displays shared personal/GPS fields. Keep our distinct job/application
+and hiring-organisation workflows; those client labels do not establish equivalent functionality.
+No client form was saved or submitted beyond demo sign-in.

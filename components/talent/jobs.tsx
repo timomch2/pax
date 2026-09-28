@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Briefcase, MapPin } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -126,62 +128,85 @@ export function JobSearch() {
         <Loading error={error} />
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
+          <p
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+            role="status"
+          >
+            <Briefcase className="h-4 w-4 text-primary" aria-hidden="true" />
             {data.total} open roles
           </p>
           {!data.jobs.length && (
-            <Panel>No jobs match these filters. Try a broader search.</Panel>
+            <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+              No jobs match these filters. Try a broader search.
+            </p>
           )}
           <div className="grid gap-4 xl:grid-cols-2">
             {data.jobs.map((job: any) => (
-              <Panel key={job.id}>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">
-                    {talentLabel(job.employmentType)}
-                  </Badge>
-                  <Badge variant="outline">{talentLabel(job.workMode)}</Badge>
-                </div>
-                <h2 className="text-lg font-semibold">
-                  <Link
-                    href={`/talent/jobs/${job.id}`}
-                    className="hover:text-primary"
-                  >
-                    {job.title}
-                  </Link>
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {job.organization} ·{" "}
-                  {[job.location, job.country].filter(Boolean).join(", ")}
-                </p>
-                <p className="line-clamp-3 text-sm">{job.summary}</p>
-                {job.match && (
-                  <p className="text-xs text-muted-foreground">
-                    Matches:{" "}
-                    {job.match.matched.join(" · ") ||
-                      "No declared preferences yet"}
-                    {job.match.missing.length > 0 && (
-                      <span className="block mt-1">
-                        Not matched: {job.match.missing.join(" · ")}
+              <Card
+                key={job.id}
+                className="transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-ring"
+              >
+                <CardContent className="flex h-full flex-col gap-3 p-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">
+                      {talentLabel(job.employmentType)}
+                    </Badge>
+                    <Badge variant="outline">{talentLabel(job.workMode)}</Badge>
+                  </div>
+                  <h2 className="font-display text-lg font-semibold">
+                    <Link
+                      href={`/talent/jobs/${job.id}`}
+                      className="hover:text-primary"
+                    >
+                      {job.title}
+                    </Link>
+                  </h2>
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {job.summary}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span>{job.organization}</span>
+                    {(job.location || job.country) && (
+                      <span className="flex items-center gap-1">
+                        <MapPin
+                          className="h-3 w-3 shrink-0"
+                          aria-hidden="true"
+                        />
+                        {[job.location, job.country].filter(Boolean).join(", ")}
                       </span>
                     )}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild>
-                    <Link href={`/talent/jobs/${job.id}`}>View and apply</Link>
-                  </Button>
-                  {session && (
-                    <Action
-                      onAction={async () => {
-                        await api(`saved-jobs/${job.id}`, "POST");
-                        toast.success("Job saved");
-                      }}
-                    >
-                      Save job
-                    </Action>
+                  </div>
+                  {job.match && (
+                    <p className="text-xs text-muted-foreground">
+                      Matches:{" "}
+                      {job.match.matched.join(" · ") ||
+                        "No declared preferences yet"}
+                      {job.match.missing.length > 0 && (
+                        <span className="block mt-1">
+                          Not matched: {job.match.missing.join(" · ")}
+                        </span>
+                      )}
+                    </p>
                   )}
-                </div>
-              </Panel>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-1">
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/talent/jobs/${job.id}`}>
+                        View and apply
+                      </Link>
+                    </Button>
+                    {session && (
+                      <Action
+                        onAction={async () => {
+                          await api(`saved-jobs/${job.id}`, "POST");
+                          toast.success("Job saved");
+                        }}
+                      >
+                        Save job
+                      </Action>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
           <div className="flex gap-2">

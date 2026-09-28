@@ -1,6 +1,17 @@
 "use client";
 import { hasRole } from "@/lib/access";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Bookmark,
+  Briefcase,
+  Building2,
+  FileCheck,
+  MessageSquare,
+  ShieldCheck,
+  UserCircle,
+  Users,
+} from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { AppShell } from "@/components/layouts/app-shell";
 import { PaxLogo } from "@/components/brand/pax-logo";
@@ -20,14 +31,30 @@ export function TalentShell({
   };
 }) {
   const { data: session } = useSession();
+  const pathname = usePathname() ?? "";
   const nav = [
-    ["/talent", "Find jobs"],
-    ["/talent/people", "Find professionals"],
-    ["/talent/profile", "My career profile"],
-    ["/talent/applications", "My applications"],
-    ["/talent/messages", "Messages"],
-    ["/talent/saved", "Saved jobs and alerts"],
-    ["/talent/hiring", "Hiring workspace"],
+    {
+      href: "/talent",
+      label: "Find jobs",
+      icon: Briefcase,
+      active: pathname === "/talent" || pathname.startsWith("/talent/jobs/"),
+    },
+    { href: "/talent/people", label: "Find professionals", icon: Users },
+    { href: "/talent/profile", label: "My career profile", icon: UserCircle },
+    { href: "/talent/applications", label: "My applications", icon: FileCheck },
+    { href: "/talent/messages", label: "Messages", icon: MessageSquare },
+    { href: "/talent/saved", label: "Saved jobs and alerts", icon: Bookmark },
+    { href: "/talent/hiring", label: "Hiring workspace", icon: Building2 },
+    ...(session?.user &&
+    hasRole(session.user.role, session.user.additionalRoles, "ADMIN")
+      ? [
+          {
+            href: "/talent/admin",
+            label: "Hiring administration",
+            icon: ShieldCheck,
+          },
+        ]
+      : []),
   ];
   return (
     <AppShell
@@ -37,31 +64,25 @@ export function TalentShell({
             <PaxLogo size="sm" />
           </Link>
           <p className="my-5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Talent
+            Talent Marketplace
           </p>
           <nav className="space-y-1" aria-label="Talent navigation">
-            {nav.map(([href, label]) => (
-              <Link
-                key={href}
-                href={href}
-                className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
-              >
-                {label}
-              </Link>
-            ))}
-            {session?.user &&
-              hasRole(
-                session.user.role,
-                session.user.additionalRoles,
-                "ADMIN",
-              ) && (
+            {nav.map(({ href, label, icon: Icon, active }) => {
+              const isActive =
+                active ??
+                (pathname === href || pathname.startsWith(`${href}/`));
+              return (
                 <Link
-                  href="/talent/admin"
-                  className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                  key={href}
+                  href={href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                 >
-                  Hiring administration
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {label}
                 </Link>
-              )}
+              );
+            })}
           </nav>
           <div className="mt-auto space-y-3 pt-8">
             <a
@@ -104,7 +125,9 @@ export function TalentShell({
       }
       header={
         <div className="flex w-full items-center justify-between gap-3">
-          <span className="text-sm font-semibold">PAX Talent</span>
+          <span className="truncate text-sm font-semibold">
+            Talent Marketplace
+          </span>
           <span className="hidden text-xs text-muted-foreground lg:inline">
             Health-sector careers and evidence-backed impact
           </span>
