@@ -344,3 +344,11 @@ These query the schema directly. A model or column rename must be reflected in t
 
 *PAX Platform — confidential. © 2026 Praxis Exchange. Version 1.0, 12 August 2026.*
 # pax
+
+### Shared registration and service setup
+
+New members use three-step registration (personal details, physical details, seven-service selection),
+verify their email, sign in and choose their first service in Accounts. New Google users complete missing
+account details and consent there. Service preferences do not assign roles or paid access. Validated
+service intake is separate; existing profiles, staff invitations and review gates remain in place.
+See [Account onboarding](docs/ACCOUNT-ONBOARDING.md) for routes, migration and verification boundaries.

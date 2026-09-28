@@ -295,7 +295,7 @@ Rules:
 ### 5.1 Auth (`lib/auth.ts`)
 
 - NextAuth 4 with `PrismaAdapter`.
-- Providers: **Google** (`allowDangerousEmailAccountLinking: true`) and **Credentials** (`bcryptjs.compare`).
+- Providers: **Google** (`allowDangerousEmailAccountLinking: false`) and **Credentials** (`bcryptjs.compare`).
 - Session strategy: **JWT**. The `jwt` callback attaches `role`, `id`, `tier`, `additionalRoles`; for Google
   SSO users missing a role it re-fetches from the database. The `session` callback mirrors these onto
   `session.user` (typed in `types/next-auth.d.ts`).
@@ -316,11 +316,18 @@ session, permission, and resource checks; revoked sessions must be rejected on t
 Read `UserRole` and the access helpers for the complete current role set, including Talent `MEMBER`
 and staff roles; do not derive permissions from a historical role inventory.
 
-- Traditional role selection offers Practitioner, Innovator, Investor, Employer, and Policymaker.
-  Talent enrollment uses `MEMBER` access and must not grant clinical privileges. Never add `PATIENT`
-  or `ADMIN` to public registration; preserve the existing dedicated enrollment flows.
-- Each role has a `UserTypeDef` (`value`, `label`, `shortLabel`, `description`, `icon`, `slug`).
-  Registration deep-links as `/register?role=<slug>`.
+- Public registration creates a neutral `MEMBER` through personal details, physical details, then
+  selection of one or more of the seven services. Country is required; Basic address fields are optional.
+  Verification precedes sign-in and the Accounts service chooser. Never accept public role/tier grants.
+- New Google identities complete the same missing details, consent and service choices in Accounts.
+  Trust verified email only from Google's verified provider claim; keep existing users grandfathered.
+- Legacy `/register?role=<slug>` links are service-selection hints only. `/talent/register` uses the
+  shared wizard with Talent preselected. Neither entry assigns a profession or staff role.
+- Setup uses `lib/service-onboarding.ts` and `lib/service-setup.ts`: explicit validated intake can
+  provision scoped service permissions, independently of checkbox enrollment, verification, membership,
+  workspace invitations and paid entitlements. No self-service ADMIN, POLICYMAKER or staff grants.
+- GPS is optional shared evidence. CHW/student categories and personal vision/motto belong only to
+  Talent profiles; they may coexist and never grant clinical access. See `docs/ACCOUNT-ONBOARDING.md`.
 - Multi-role support: `userRoles(primary, additional)` de-duplicates; `hasRole(primary, additional, required)`
   is the shared role helper. Preserve its admin behavior; granular permissions and workspace capabilities
   are separate checks and must not be bypassed by a new blanket admin shortcut.

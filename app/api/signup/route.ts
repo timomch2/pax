@@ -3,47 +3,22 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { generatePaxId, generateClinicId } from '@/lib/pax-id';
+import { generatePaxId } from '@/lib/pax-id';
 import { logAudit } from '@/lib/audit';
 import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '@/lib/policy-version';
-import { z } from 'zod';
+import { signupSchema, recordRegistration } from '@/lib/registration';
+import { Prisma } from '@prisma/client';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { createOpaqueToken } from '@/lib/auth-tokens';
 import { enqueueNotification } from '@/lib/notification-service';
-import { strongPasswordSchema } from '@/lib/password-policy';
 import { verifyTurnstile } from '@/lib/bot-protection';
-import { talentEnabled, productUrl, productRoutingEnabled } from '@/lib/product-hosts';
-
-// Patient is no longer a self-registration user type. The 5 PAX user types are below.
-const VALID_ROLES = ['PRACTITIONER', 'INNOVATOR', 'INVESTOR', 'EMPLOYER', 'POLICYMAKER', 'MEMBER'] as const;
-
-const signupSchema = z.object({
-  email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
-  password: strongPasswordSchema,
-  name: z.string().trim().min(2).max(120),
-  role: z.enum(VALID_ROLES).default('PRACTITIONER'),
-  additionalRoles: z.array(z.enum(VALID_ROLES)).max(4).optional().default([]),
-  phone: z.string().trim().max(40).optional().nullable(),
-  physicalAddress: z.string().trim().max(1000).optional().nullable(),
-  city: z.string().trim().max(120).optional().nullable(),
-  postalCode: z.string().trim().max(40).optional().nullable(),
-  country: z.string().trim().min(2).max(120),
-  medicalRegNumber: z.string().trim().max(120).optional().nullable(),
-  specialty: z.string().trim().max(160).optional().nullable(),
-  organization: z.string().trim().max(240).optional().nullable(),
-  linkedinUrl: z.string().url().max(500).optional().nullable().or(z.literal('')),
-  headline: z.string().trim().max(240).optional().nullable(),
-  consentGiven: z.literal(true),
-  turnstileToken: z.string().max(2048).optional().nullable(),
-  talentOnboarding: z.boolean().optional(),
-}).strict();
+import { productUrl, productRoutingEnabled } from '@/lib/product-hosts';
 
 export async function POST(req: NextRequest) {
   try {
     const parsed = signupSchema.safeParse(await req.json());
     if (!parsed.success) return NextResponse.json({ error: 'Invalid registration details', details: parsed.error.flatten() }, { status: 400 });
-    const { email, password, name, role, additionalRoles, phone, physicalAddress, city, postalCode, country, medicalRegNumber, specialty, organization, linkedinUrl, headline } = parsed.data;
-    if ((role === 'MEMBER' || additionalRoles.includes('MEMBER')) && (!talentEnabled() || !parsed.data.talentOnboarding || role !== 'MEMBER' || additionalRoles.length)) return NextResponse.json({ error: 'Use Talent registration to create a member account' }, { status: 400 });
+    const { email, password, name, phone, physicalAddress, city, postalCode, country, serviceKeys } = parsed.data;
     const rateLimit = await enforceRateLimit(req, { name: 'signup', limit: 5, windowSeconds: 60 * 60, blockSeconds: 60 * 60 }, email);
     if (!rateLimit.allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } });
     if (!await verifyTurnstile(req, parsed.data.turnstileToken)) return NextResponse.json({ error: 'Bot verification failed' }, { status: 400 });
@@ -54,14 +29,11 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const userRole = role;
+    const userRole = 'MEMBER' as const;
     const paxId = generatePaxId(userRole);
 
-    // Validate additional roles (filter to valid values, exclude primary)
-    const validAdditional = additionalRoles.filter((additionalRole) => additionalRole !== userRole);
-
-    const accessRole = await prisma.accessRole.findUnique({ where: { key: userRole }, select: { id: true } });
-    if (!accessRole) return NextResponse.json({ error: 'Registration is temporarily unavailable' }, { status: 503 });
+    const accessRole = await prisma.accessRole.findUnique({ where: { key: userRole }, select: { id: true, active: true } });
+    if (!accessRole?.active) return NextResponse.json({ error: 'Registration is temporarily unavailable' }, { status: 503 });
     const { token, tokenHash } = createOpaqueToken();
     const expiresMinutes = 30;
 
@@ -71,9 +43,12 @@ export async function POST(req: NextRequest) {
         email,
         password: hashedPassword,
         name,
-        role: userRole as any,
+        role: userRole,
+        registrationVersion: 1,
+        accountOnboardingCompletedAt: new Date(),
+        accountWelcomePending: true,
         tier: 'TIER1_BASIC',
-        additionalRoles: validAdditional,
+        additionalRoles: [],
         phone: phone || null,
         physicalAddress: physicalAddress || null,
         city: city || null,
@@ -83,21 +58,6 @@ export async function POST(req: NextRequest) {
         consentedAt: new Date(),
         privacyPolicyVersion: PRIVACY_POLICY_VERSION,
         termsVersion: TERMS_VERSION,
-        organization: organization || null,
-        linkedinUrl: linkedinUrl || null,
-        headline: headline || null,
-        ...(userRole === 'PRACTITIONER' && medicalRegNumber && specialty
-          ? {
-              practitionerProfile: {
-                create: {
-                  medicalRegNumber,
-                  specialty,
-                  consultationRate: 2500,
-                  clinicId: generateClinicId(),
-                },
-              },
-            }
-          : {}),
           accessRoleAssignments: {
             create: { accessRoleId: accessRole.id, scope: 'OWN' },
           },
@@ -105,32 +65,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-    // Append-only consent ledger (DPA 2019 s.32 proof of consent)
-    const fwd = req.headers.get('x-forwarded-for');
-    const ipAddress = (fwd ? fwd.split(',')[0].trim() : req.headers.get('x-real-ip')) || null;
-    const userAgent = req.headers.get('user-agent') || null;
-      await tx.consentRecord.createMany({
-        data: [
-          {
-            userId: created.id,
-            consentType: 'PRIVACY_POLICY' as any,
-            granted: true,
-            policyVersion: PRIVACY_POLICY_VERSION,
-            termsVersion: TERMS_VERSION,
-            ipAddress,
-            userAgent,
-          },
-          {
-            userId: created.id,
-            consentType: 'ACCOUNT_TERMS' as any,
-            granted: true,
-            policyVersion: PRIVACY_POLICY_VERSION,
-            termsVersion: TERMS_VERSION,
-            ipAddress,
-            userAgent,
-          },
-        ],
-      });
+      await recordRegistration(tx, created.id, serviceKeys, req);
       await tx.authToken.create({
         data: {
           userId: created.id,
@@ -174,7 +109,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true, message: 'If the account can be created, verification instructions will be sent.' }, { status: 202 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return NextResponse.json({ ok: true, message: 'If the account can be created, verification instructions will be sent.' }, { status: 202 });
     console.error('Signup error:', error);
     return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
   }

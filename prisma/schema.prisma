@@ -384,6 +384,9 @@ enum ReminderChannel {
 }
 
 model User {
+  registrationVersion Int?
+  accountOnboardingCompletedAt DateTime?
+  accountWelcomePending Boolean @default(false)
   id                   String            @id @default(cuid())
   name                 String
   email                String            @unique
@@ -2873,6 +2876,14 @@ enum TalentConversationStatus {
 }
 
 model TalentProfile {
+  personalVision String @default("") @db.Text
+  motto String @default("")
+  participantCategories String[] @default([])
+  communityHealthUnit String @default("")
+  chwCounty String @default("")
+  institution String @default("")
+  courseOfStudy String @default("")
+  studyYear String @default("")
   userId String @id
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
   headline String @default("")
@@ -3083,6 +3094,9 @@ enum ServiceEnrollmentSource {
 }
 
 model UserService {
+  setupStartedAt DateTime?
+  setupCompletedAt DateTime?
+  setupChoice String?
   id          String @id @default(cuid())
   userId      String
   user        User @relation(fields: [userId], references: [id], onDelete: Restrict)

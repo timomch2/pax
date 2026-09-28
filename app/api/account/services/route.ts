@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -27,5 +28,20 @@ export async function PATCH(req: Request) {
   try {
     await setServiceEnrollment(session.user.id, input.data.serviceKey, input.data.enabled);
     return NextResponse.json({ services: await readAccountServices(session.user.id) }, { headers: privateHeaders });
+  } catch (error) { return failure(error); }
+}
+
+/** Acknowledge the first service choice without granting permissions. */
+export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isSameProductOrigin(req)) return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 });
+  const input = z.object({ serviceKey: z.enum(SERVICE_KEYS) }).strict().safeParse(await req.json().catch(() => null));
+  if (!input.success) return NextResponse.json({ error: 'Choose a valid service' }, { status: 400 });
+  try {
+    const service = (await readAccountServices(session.user.id)).find(s => s.id === input.data.serviceKey)!;
+    if (!service.canOpen || (service.state !== 'ENABLED' && service.id !== 'safety')) return NextResponse.json({ error: 'Service is unavailable' }, { status: 403 });
+    await prisma.user.update({ where: { id: session.user.id }, data: { accountWelcomePending: false } });
+    return NextResponse.json({ href: service.entryHref }, { headers: privateHeaders });
   } catch (error) { return failure(error); }
 }

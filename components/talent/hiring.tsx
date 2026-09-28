@@ -124,7 +124,7 @@ export function HiringHome() {
     </div>
   );
 }
-function HiringProfileForm({
+export function HiringProfileForm({
   profile,
   onSaved,
 }: {

@@ -123,7 +123,7 @@ const COMMON: PermissionKey[] = [
 ];
 
 export const ROLE_PERMISSION_KEYS: Record<UserRole, PermissionKey[]> = {
-  MEMBER: ['profile.read', 'profile.update', 'privacy.manage', 'notification.read', 'upload.create', 'upload.read', 'talent.job.read', 'gps.entry.create', 'gps.entry.read', 'gps.entry.update', 'gps.entry.delete', 'gps.evidence.read', 'gps.evidence.manage', 'gps.endorsement.manage'],
+  MEMBER: ['safety.report.create', 'verification.request', 'profile.read', 'profile.update', 'privacy.manage', 'notification.read', 'upload.create', 'upload.read', 'talent.job.read', 'gps.entry.create', 'gps.entry.read', 'gps.entry.update', 'gps.entry.delete', 'gps.evidence.read', 'gps.evidence.manage', 'gps.endorsement.manage'],
   STAFF: [],
   ADMIN: PERMISSIONS.map(([key]) => key),
   PRACTITIONER: [

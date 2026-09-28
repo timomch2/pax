@@ -12,7 +12,7 @@ export function isServiceKey(value: unknown): value is ServiceKey {
 
 const ownerSelect = { accountStatus: true, role: true, additionalRoles: true, tier: true, hubMember: true } as const;
 export const serviceAccountSelect = Prisma.validator<Prisma.UserSelect>()({
-  id: true, ...ownerSelect, emailVerified: true,
+  id: true, ...ownerSelect, emailVerified: true, registrationVersion: true, accountOnboardingCompletedAt: true, accountWelcomePending: true,
   services: true,
   practitionerProfile: { select: { id: true } },
   practiceWorkspace: { select: { id: true } },
@@ -22,7 +22,7 @@ export const serviceAccountSelect = Prisma.validator<Prisma.UserSelect>()({
   talentMemberships: { where: { revokedAt: null }, select: { hiringProfile: { select: { owner: { select: { accountStatus: true } } } } } },
   marketplaceVendor: { select: { id: true, status: true, licenseExpiryDate: true } },
   marketplaceBuyer: { select: { id: true, status: true } },
-  investorMandate: { select: { id: true } },
+  investorMandate: { select: { id: true, ethicalManifestoAcceptedAt: true } },
   _count: { select: { innovations: true, investments: true, vaultAccessRequests: true, debatesInitiated: true, debateContributions: true, debateStances: true } },
 });
 export type ServiceAccount = Prisma.UserGetPayload<{ select: typeof serviceAccountSelect }>;
@@ -83,10 +83,25 @@ export function serviceAccountSummary(user: ServiceAccount, availability = { pra
     }
     if (user.accountStatus !== 'ACTIVE') { access = 'ACCOUNT_RESTRICTED'; reason = 'Your account is restricted. Contact support for assistance.'; }
     if (access === 'UNAVAILABLE' || access === 'ACCOUNT_RESTRICTED') { canOpen = false; dashboardHref = null; }
+    const setupHref = productUrl('accounts', `/account/services/${key}`);
+    // Legacy members with established access retain their existing journeys. Enrollment alone is not setup.
+    const legacyComplete = user.registrationVersion !== 1 && (
+      key === 'community' || key === 'safety' || evidence[key]
+      || (key === 'innovation' && hasRole(user.role, user.additionalRoles, 'INNOVATOR'))
+      || (key === 'investment' && hasRole(user.role, user.additionalRoles, 'INVESTOR'))
+    );
+    // New intakes finish only when their validated data and access grant commit together.
+    // Invited staff retain their existing independent workspace entry.
+    const invited = key === 'practice' ? Boolean(user.practiceMemberships.length) : key === 'talent' ? Boolean(user.talentMemberships.length) : false;
+    const setupComplete = Boolean(enrollment?.setupCompletedAt || legacyComplete || invited || key === 'safety');
+    const setupStatus = setupComplete ? 'COMPLETE' as const : enrollment?.setupStartedAt ? 'IN_PROGRESS' as const : 'NOT_STARTED' as const;
+    if (!setupComplete && !['UNAVAILABLE', 'ACCOUNT_RESTRICTED'].includes(access)) {
+      access = 'SETUP_REQUIRED'; canOpen = true; reason = user.emailVerified ? 'Complete this service’s setup to get started.' : 'Verify your email before completing service setup.';
+    }
     return {
-      ...link, id: key, state: enrollment?.state ?? 'NOT_ENABLED', source: enrollment?.source ?? null,
+      ...link, entryHref: setupComplete ? link.href : setupHref, setupHref, setupStatus, id: key, state: enrollment?.state ?? 'NOT_ENABLED', source: enrollment?.source ?? null,
       enabledAt: enrollment?.enabledAt.toISOString() ?? null, disabledAt: enrollment?.disabledAt?.toISOString() ?? null,
-      access, reason, canOpen, dashboardHref, setupComplete: canOpen && (access === 'ACTIVE' || access === 'LIMITED'),
+      access, reason, canOpen, dashboardHref, setupComplete,
       accessSource: 'EXISTING_RULES' as const,
       manageHref: productUrl('accounts', `/account?service=${key}#my-services`),
     };

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existingServiceEvidence, isServiceKey, serviceAccountSummary, type ServiceAccount } from '@/lib/service-enrollment';
 
 function account(overrides: Partial<ServiceAccount> = {}): ServiceAccount {
-  return { id: 'member', accountStatus: 'ACTIVE', role: 'PRACTITIONER', additionalRoles: [], tier: 'TIER2_PROFESSIONAL', hubMember: true,
+  return { registrationVersion: null, accountOnboardingCompletedAt: null, accountWelcomePending: false, id: 'member', accountStatus: 'ACTIVE', role: 'PRACTITIONER', additionalRoles: [], tier: 'TIER2_PROFESSIONAL', hubMember: true,
     emailVerified: new Date('2026-01-01'), services: [], practitionerProfile: null, practiceWorkspace: null, practiceMemberships: [],
     talentProfile: null, talentHiringProfiles: [], talentMemberships: [], marketplaceVendor: null, marketplaceBuyer: null, investorMandate: null,
     _count: { innovations: 0, investments: 0, vaultAccessRequests: 0, debatesInitiated: 0, debateContributions: 0, debateStances: 0 }, ...overrides };
@@ -17,7 +17,7 @@ test('backfill requires service evidence, never a global role or tier', () => {
 });
 test('enrollment and access are independent; enabling does not complete setup', () => {
   const now = new Date('2026-01-01');
-  const services = [{ id: 'enrollment', userId: 'member', serviceKey: 'talent' as const, state: 'ENABLED' as const, source: 'SELF' as const, enabledAt: now, disabledAt: null, createdAt: now, updatedAt: now }];
+  const services = [{ setupStartedAt: null, setupCompletedAt: null, setupChoice: null, id: 'enrollment', userId: 'member', serviceKey: 'talent' as const, state: 'ENABLED' as const, source: 'SELF' as const, enabledAt: now, disabledAt: null, createdAt: now, updatedAt: now }];
   const summary = serviceAccountSummary(account({ services }), availability);
   assert.equal(summary.find(s => s.id === 'talent')?.state, 'ENABLED');
   assert.equal(summary.find(s => s.id === 'talent')?.access, 'SETUP_REQUIRED');
@@ -49,7 +49,7 @@ test('vendor approval and expired licences are separate from service enrollment'
 
 test('disabled enrollment stays disabled even when an existing workspace is active', () => {
   const now = new Date('2026-01-01');
-  const user = account({ practiceWorkspace: { id: 'workspace' }, services: [{ id: 'e', userId: 'member', serviceKey: 'practice', state: 'DISABLED', source: 'LEGACY', enabledAt: now, disabledAt: now, createdAt: now, updatedAt: now }] });
+  const user = account({ practiceWorkspace: { id: 'workspace' }, services: [{ setupStartedAt: null, setupCompletedAt: null, setupChoice: null, id: 'e', userId: 'member', serviceKey: 'practice', state: 'DISABLED', source: 'LEGACY', enabledAt: now, disabledAt: now, createdAt: now, updatedAt: now }] });
   const practice = serviceAccountSummary(user, availability).find(s => s.id === 'practice')!;
   assert.equal(practice.state, 'DISABLED');
   assert.equal(practice.access, 'ACTIVE');
@@ -59,14 +59,15 @@ test('disabled enrollment stays disabled even when an existing workspace is acti
 
 test('seven services preserve role boundaries even after enabling', () => {
   const now = new Date('2026-09-24');
-  const member = account({ role: 'MEMBER', services: ['innovation', 'investment'].map(serviceKey => ({ id: serviceKey, userId: 'member', serviceKey: serviceKey as 'innovation' | 'investment', state: 'ENABLED', source: 'SELF', enabledAt: now, disabledAt: null, createdAt: now, updatedAt: now })) });
+  const member = account({ role: 'MEMBER', services: ['innovation', 'investment'].map(serviceKey => ({ setupStartedAt: null, setupCompletedAt: null, setupChoice: null, id: serviceKey, userId: 'member', serviceKey: serviceKey as 'innovation' | 'investment', state: 'ENABLED', source: 'SELF', enabledAt: now, disabledAt: null, createdAt: now, updatedAt: now })) });
   const summary = serviceAccountSummary(member, availability);
   assert.equal(summary.length, 7);
   for (const id of ['innovation', 'investment']) {
     const service = summary.find(s => s.id === id)!;
     assert.equal(service.state, 'ENABLED');
-    assert.equal(service.access, 'LIMITED');
-    assert.equal(service.canOpen, false);
+    assert.equal(service.access, 'SETUP_REQUIRED');
+    assert.ok(service.entryHref.endsWith(`/account/services/${id}`));
+    assert.equal(service.canOpen, true);
     assert.equal(service.setupComplete, false);
   }
   for (const [id, role] of [['innovation', 'INNOVATOR'], ['investment', 'INVESTOR']] as const) {
@@ -96,6 +97,14 @@ test('new backfill evidence uses actual innovation or investment records and nev
   assert.equal(existingServiceEvidence(user).innovation, true);
   assert.equal(existingServiceEvidence(user).investment, true);
   assert.equal(existingServiceEvidence(user).safety, false);
-  assert.equal(existingServiceEvidence(account({ investorMandate: { id: 'mandate' } })).investment, true);
+  assert.equal(existingServiceEvidence(account({ investorMandate: { id: 'mandate', ethicalManifestoAcceptedAt: null } })).investment, true);
   for (const key of ['innovation', 'investment', 'safety']) assert.equal(isServiceKey(key), true);
+});
+
+test('new intakes resume until atomic activation even if part of the requested profile exists', () => {
+  const now = new Date();
+  const member = account({registrationVersion: 1, role:'MEMBER', talentProfile:{userId:'member'}, marketplaceBuyer:{id:'buyer',status:'PENDING'}, services: ['talent','market'].map(key => ({id:key,userId:'member',serviceKey:key as 'talent'|'market',state:'ENABLED',source:'SELF',enabledAt:now,disabledAt:null,createdAt:now,updatedAt:now,setupStartedAt:now,setupCompletedAt:null,setupChoice:key === 'talent' ? 'both' : 'vendor'}))});
+  for (const key of ['talent','market']) assert.equal(serviceAccountSummary(member,availability).find(s => s.id === key)?.setupStatus,'IN_PROGRESS');
+  member.services[0].setupCompletedAt = now;
+  assert.equal(serviceAccountSummary(member,availability).find(s=>s.id==='talent')?.setupStatus,'COMPLETE');
 });

@@ -41,11 +41,12 @@ const MANIFESTO_PRINCIPLES = [
   },
 ];
 
-export function EthicalManifesto({ onAccepted }: { onAccepted: () => void }) {
+export function EthicalManifesto({ onAccepted, deferSave = false }: { onAccepted: () => void; deferSave?: boolean }) {
   const [checkedAll, setCheckedAll] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const accept = async () => {
+    if (deferSave) { onAccepted(); return; }
     setSubmitting(true);
     try {
       const res = await fetch('/api/investor/manifesto', {

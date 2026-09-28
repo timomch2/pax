@@ -1,3 +1,4 @@
+import { guardServiceEntry } from '@/lib/service-setup';
 export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
@@ -12,6 +13,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
   if (!session?.user) {
     redirect('/login');
   }
+  await guardServiceEntry(session.user.id, 'investment');
   const { role, additionalRoles } = session.user as { role?: string; additionalRoles?: string[] };
   if (!hasRole(role, additionalRoles, 'INVESTOR')) {
     redirect('/hub');

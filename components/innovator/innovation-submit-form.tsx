@@ -47,7 +47,7 @@ const EMPTY: Fields = {
 
 type Phase = 'assessment' | 'brief' | 'issued';
 
-export function InnovationSubmitForm() {
+export function InnovationSubmitForm({ setupSubmit }: { setupSubmit?: (body: unknown) => Promise<void> } = {}) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('assessment');
   const [assessment, setAssessment] = useState<SelfAssessmentData | null>(null);
@@ -71,7 +71,7 @@ export function InnovationSubmitForm() {
     }
     submit ? setSubmitting(true) : setSavingDraft(true);
     try {
-      const body: any = {
+      const body = {
         ...f,
         fundingGoal: f.fundingGoal || 0,
         submit,
@@ -86,6 +86,7 @@ export function InnovationSubmitForm() {
         thirdPartyDeps: assessment?.thirdPartyDeps ?? false,
         thirdPartyDepsNote: assessment?.thirdPartyDepsNote || undefined,
       };
+      if (setupSubmit) { await setupSubmit(body); return; }
       const res = await fetch('/api/innovator/innovations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -58,7 +58,7 @@ export function ProductSwitcher({ variant = "links" }: { variant?: "links" | "la
             {data.services.map((link) => {
               const Icon = SERVICE_ICONS[link.id];
               const service = enrollment?.services.find(item => item.id === link.id);
-              const href = link.id === "home" ? data.homeHref : link.id === "safety" || (service?.state === "ENABLED" && service.canOpen) ? link.href : `${data.accountHref}?service=${link.id}#my-services`;
+              const href = link.id === "home" ? data.homeHref : link.id === "safety" || (service?.state === "ENABLED" && service.canOpen) ? (service?.entryHref || link.href) : `${data.accountHref}?service=${link.id}#my-services`;
               return (
                 <a
                   key={link.id}

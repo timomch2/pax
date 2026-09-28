@@ -3,11 +3,12 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
+import { generatePaxId } from '@/lib/pax-id';
 import { prisma } from '@/lib/db';
 import { logAuditRaw } from '@/lib/audit';
 import { enforceIdentifierRateLimit } from '@/lib/rate-limit';
 import { verifyAndConsumeSecondFactor } from '@/lib/mfa';
-import { safeReturnUrl, sharedSessionCookie, talentEnabled } from '@/lib/product-hosts';
+import { safeReturnUrl, sharedSessionCookie } from '@/lib/product-hosts';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,10 +18,11 @@ const LOCKOUT_MINUTES = 15;
 export const authOptions: NextAuthOptions = {
   adapter: {
     ...PrismaAdapter(prisma),
-    ...(talentEnabled() ? { createUser: async (data: { name?: string | null; email: string; emailVerified: Date | null; image?: string | null }) => {
+    ...({ createUser: async (data: { name?: string | null; email: string; emailVerified: Date | null; image?: string | null }) => {
       const role = await prisma.accessRole.findUniqueOrThrow({ where: { key: 'MEMBER' } });
-      return prisma.user.create({ data: { ...data, name: data.name || 'PAX member', role: 'MEMBER', accessRoleAssignments: { create: { accessRoleId: role.id, scope: 'OWN' } }, notificationPreference: { create: {} } } });
-    } } : {}),
+      if (!role.active) throw new Error('Registration is unavailable');
+      return prisma.user.create({ data: { ...data, name: data.name || 'PAX member', role: 'MEMBER', paxId: generatePaxId('MEMBER'), registrationVersion: 1, accountWelcomePending: true, accessRoleAssignments: { create: { accessRoleId: role.id, scope: 'OWN' } }, notificationPreference: { create: {} } } });
+    } }),
   },
   providers: [
     GoogleProvider({
@@ -184,7 +186,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: { token: any; user: any }) {
+    async signIn({ account, profile }) {
+      return account?.provider !== 'google' || (profile as { email_verified?: boolean } | undefined)?.email_verified === true;
+    },
+    async jwt({ token, user, account, profile }) {
+      if (user && account?.provider === 'google' && (profile as { email_verified?: boolean } | undefined)?.email_verified === true) {
+        await prisma.user.updateMany({ where: { id: user.id, emailVerified: null }, data: { emailVerified: new Date(), verificationLevel: 'EMAIL_VERIFIED' } });
+      }
       if (user) {
         token.sessionStartedAt = Math.floor(Date.now() / 1000);
         token.role = user.role;
@@ -222,6 +230,8 @@ export const authOptions: NextAuthOptions = {
             token.additionalRoles = (dbUser as any).additionalRoles ?? [];
             token.sessionVersion = dbUser.sessionVersion;
             token.permissionVersion = dbUser.permissionVersion;
+            token.accountOnboardingPending = dbUser.registrationVersion === 1 && !dbUser.accountOnboardingCompletedAt;
+            token.accountWelcomePending = dbUser.accountWelcomePending;
           } else {
             token.authInvalid = true;
           }

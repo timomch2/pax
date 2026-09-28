@@ -19,8 +19,9 @@ export default async function AccountPage({ searchParams }: { searchParams: { se
     redirect(productUrl("accounts", "/login?callbackUrl=/account"));
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id },
-    select: { name: true, email: true, mfaEnabled: true, password: true },
+    select: { name: true, email: true, mfaEnabled: true, password: true, registrationVersion: true, accountOnboardingCompletedAt: true },
   });
+  if (user.registrationVersion === 1 && !user.accountOnboardingCompletedAt) redirect(productUrl('accounts', '/account/onboarding'));
   const services = await readAccountServices(session.user.id);
   return (
     <Container size="md" className="space-y-6">

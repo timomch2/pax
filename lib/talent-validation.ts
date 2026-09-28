@@ -31,6 +31,9 @@ const period = z
   .strict();
 export const profileSchema = z
   .object({
+    personalVision: z.string().trim().max(2000).optional(), motto: short.optional(),
+    participantCategories: z.array(z.enum(['CHW', 'STUDENT'])).max(2).transform(v => [...new Set(v)]).optional(),
+    communityHealthUnit: short.optional(), chwCounty: short.optional(), institution: short.optional(), courseOfStudy: short.optional(), studyYear: short.optional(),
     headline: short,
     about: text,
     location: short,

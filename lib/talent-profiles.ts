@@ -140,6 +140,14 @@ export async function viewTalentProfile(
   );
   return {
     ...snapshot,
+    personalVision: profile.personalVision,
+    motto: profile.motto,
+    participantCategories: profile.participantCategories,
+    communityHealthUnit: profile.communityHealthUnit,
+    chwCounty: profile.chwCounty,
+    institution: profile.institution,
+    courseOfStudy: profile.courseOfStudy,
+    studyYear: profile.studyYear,
     userId: targetId,
     visibility: profile.visibility,
     avatarAssetId: profile.avatarAssetId,

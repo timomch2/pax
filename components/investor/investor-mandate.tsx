@@ -39,7 +39,7 @@ function toggle(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-export function InvestorMandate() {
+export function InvestorMandate({ setupSubmit }: { setupSubmit?: (body: MandateState) => Promise<void> } = {}) {
   const { toast } = useToast();
   const [state, setState] = useState<MandateState>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -47,6 +47,7 @@ export function InvestorMandate() {
 
   useEffect(() => {
     const load = async () => {
+      if (setupSubmit) { setLoading(false); return; }
       setLoading(true);
       try {
         const res = await fetch('/api/investor/mandate');
@@ -73,11 +74,12 @@ export function InvestorMandate() {
       }
     };
     load();
-  }, []);
+  }, [setupSubmit]);
 
   const save = async () => {
     setSaving(true);
     try {
+      if (setupSubmit) { await setupSubmit(state); return; }
       const res = await fetch('/api/investor/mandate', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

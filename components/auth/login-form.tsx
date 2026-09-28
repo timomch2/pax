@@ -54,6 +54,7 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
+      {searchParams.get('verification') === 'pending' && <p role="status" className="rounded-lg bg-primary/10 p-3 text-sm">Check your email for a verification link. After verifying and signing in, you’ll choose your first service in Accounts.</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>

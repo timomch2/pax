@@ -14,7 +14,7 @@ import { uploadAsset } from '@/lib/client-upload';
 
 type DocUpload = { docType: string; fileName: string; uploadAssetId: string; contentType: string; expiryDate: string };
 
-export function VendorOnboardingForm() {
+export function VendorOnboardingForm({ onComplete }: { onComplete?: () => Promise<void> } = {}) {
   const router = useRouter();
   const { data: session } = useSession() || {};
   const addrRequired = addressRequiredForTier((session?.user as { tier?: string } | undefined)?.tier);
@@ -82,7 +82,7 @@ export function VendorOnboardingForm() {
         setError(data.error || 'Failed to submit');
       } else {
         setSuccess(true);
-        setTimeout(() => router.push('/marketplace'), 2000);
+        if (onComplete) await onComplete(); else setTimeout(() => router.push('/marketplace'), 2000);
       }
     } catch { setError('Network error'); }
     setSubmitting(false);

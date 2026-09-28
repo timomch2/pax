@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import { guardServiceEntry } from '@/lib/service-setup';
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -80,6 +81,7 @@ export default async function Page({
     [area = "", id] = path;
   if (!(area in titles)) notFound();
   const session = await getServerSession(authOptions);
+  if (session?.user?.id && area !== 'team-invitation') await guardServiceEntry(session.user.id, 'talent');
   const currentPath = `/talent${path.length ? `/${path.join("/")}` : ""}`;
   const loginUrl = productUrl(
     "accounts",

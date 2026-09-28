@@ -18,7 +18,7 @@ import {
 } from "./common";
 import { employmentTypes, workModes } from "@/lib/talent-validation";
 
-export function ProfileEditor() {
+export function ProfileEditor({ onComplete }: { onComplete?: () => Promise<void> } = {}) {
   const { data, error, mutate } = useSWR("me", api);
   if (!data) return <Loading error={error} />;
   return (
@@ -26,7 +26,7 @@ export function ProfileEditor() {
       key={data.profile?.updatedAt || "new"}
       profile={data.profile}
       user={data.user}
-      onSaved={() => mutate()}
+      onSaved={async () => { await mutate(); await onComplete?.(); }}
     />
   );
 }
@@ -56,7 +56,9 @@ function ProfileFields({
   const [preferredModes, setPreferredModes] = useState<string[]>(
     profile?.preferredModes || [],
   );
+  const [categories, setCategories] = useState<string[]>(profile?.participantCategories || []);
   const defaults = {
+    personalVision: profile?.personalVision || '', motto: profile?.motto || '', communityHealthUnit: profile?.communityHealthUnit || '', chwCounty: profile?.chwCounty || '', institution: profile?.institution || '', courseOfStudy: profile?.courseOfStudy || '', studyYear: profile?.studyYear || '',
     headline: profile?.headline || "",
     about: profile?.about || "",
     location: profile?.location || "",
@@ -107,10 +109,15 @@ function ProfileFields({
             </Link>
           </div>
         )}
+        <fieldset className="flex flex-wrap gap-4"><legend className="mb-2 text-sm font-medium">Optional participant categories</legend>{[['CHW', 'Community Health Worker'], ['STUDENT', 'Student']].map(([value, label]) => <label key={value} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={categories.includes(value)} onChange={event => setCategories(event.target.checked ? [...categories, value] : categories.filter(item => item !== value))} />{label}</label>)}</fieldset>
         <TalentForm
           defaults={defaults}
           submitLabel="Save career profile"
           fields={[
+            { name: 'personalVision', label: 'Personal vision (optional)', type: 'textarea' },
+            { name: 'motto', label: 'Motto or inspiration (optional)' },
+            ...(categories.includes('CHW') ? [{ name: 'communityHealthUnit', label: 'Community Health Unit (optional)' }, { name: 'chwCounty', label: 'County (optional)' }] : []),
+            ...(categories.includes('STUDENT') ? [{ name: 'institution', label: 'Training institution (optional)' }, { name: 'courseOfStudy', label: 'Course (optional)' }, { name: 'studyYear', label: 'Year (optional)' }] : []),
             {
               name: "headline",
               label: "Professional headline",
@@ -171,6 +178,7 @@ function ProfileFields({
           onSave={async (values) => {
             await api("me", "PUT", {
               ...values,
+              participantCategories: categories,
               country: values.country.toUpperCase(),
               skills: splitTags(values.skills),
               languages: splitTags(values.languages),
@@ -345,6 +353,10 @@ export function CareerView({ profile }: { profile: any }) {
           ))}
         </div>
         <p className="text-sm">{profile.availability}</p>
+        {profile.personalVision && <p><strong>Personal vision:</strong> {profile.personalVision}</p>}
+        {profile.motto && <p><strong>Motto:</strong> {profile.motto}</p>}
+        {profile.participantCategories?.includes('CHW') && <p>Community health: {[profile.communityHealthUnit, profile.chwCounty].filter(Boolean).join(' · ')}</p>}
+        {profile.participantCategories?.includes('STUDENT') && <p>Student: {[profile.institution, profile.courseOfStudy, profile.studyYear].filter(Boolean).join(' · ')}</p>}
       </Panel>
       {["experiences", "education", "credentials"].map((key, index) => (
         <Panel

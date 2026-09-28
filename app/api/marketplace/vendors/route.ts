@@ -5,13 +5,23 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { addressRequiredForTier } from '@/lib/access';
+import { setupActor, completeServiceSetup } from '@/lib/service-setup';
+import { ServiceEnrollmentError } from '@/lib/service-enrollment';
+import { isSameProductOrigin } from '@/lib/product-hosts';
 import { requirePermission } from '@/lib/authorization';
 
 // POST — create vendor application (onboarding)
 export async function POST(req: NextRequest) {
   try {
-    const auth = await requirePermission('marketplace.vendor.manage', {}, req);
-    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    if (!isSameProductOrigin(req)) return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const permission = await requirePermission('marketplace.vendor.manage', {}, req);
+    const auth = { userId: session.user.id };
+    const setup = await prisma.userService.findUnique({ where: { userId_serviceKey: { userId: auth.userId, serviceKey: 'market' } } });
+    const onboarding = setup?.state === 'ENABLED' && setup.setupChoice === 'vendor' && !setup.setupCompletedAt;
+    if (!permission.ok && !onboarding) return NextResponse.json({ error: permission.error }, { status: permission.status });
+    if (onboarding) await setupActor(prisma, auth.userId, 'market');
 
     // Check if user already has a vendor profile
     const existing = await prisma.marketplaceVendor.findUnique({ where: { userId: auth.userId } });
@@ -47,7 +57,8 @@ export async function POST(req: NextRequest) {
     const assets = await prisma.uploadAsset.findMany({ where: { id: { in: uploadAssetIds }, ownerId: auth.userId, purpose: 'VENDOR_DOCUMENT', status: 'CLEAN' } });
     if (assets.length !== uploadAssetIds.length) return NextResponse.json({ error: 'One or more documents are unavailable, unsafe, or not owned by you' }, { status: 400 });
     const byId = new Map(assets.map((asset) => [asset.id, asset]));
-    const vendor = await prisma.marketplaceVendor.create({
+    const vendor = await prisma.$transaction(async tx => {
+      const created = await tx.marketplaceVendor.create({
       data: {
         userId: auth.userId,
         corporateName, tradingName, country, registrationNumber, taxId,
@@ -69,8 +80,12 @@ export async function POST(req: NextRequest) {
       include: { documents: true },
     });
 
+      if (onboarding) await completeServiceSetup(tx, auth.userId, 'market');
+      return created;
+    });
     return NextResponse.json(vendor, { status: 201 });
   } catch (err: unknown) {
+    if (err instanceof ServiceEnrollmentError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error('Vendor create error:', err);
     return NextResponse.json({ error: 'Failed to create vendor application' }, { status: 500 });
   }
