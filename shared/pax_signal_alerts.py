@@ -21,7 +21,7 @@ def main() -> None:
         cursor.execute(
             '''SELECT lower(trim("drugName")) AS key, min("drugName") AS name, count(*)::int,
                       sum(CASE "severity" WHEN 'MILD' THEN 1 WHEN 'MODERATE' THEN 2 WHEN 'SEVERE' THEN 4 WHEN 'LIFE_THREATENING' THEN 6 END)::int AS score
-               FROM "AdverseDrugReport" WHERE "createdAt" >= NOW() - INTERVAL '14 days'
+               FROM safety."AdverseDrugReport" WHERE "createdAt" >= NOW() - INTERVAL '14 days'
                GROUP BY lower(trim("drugName"))'''
         )
         recipients = authorized_safety_recipients(cursor)
@@ -30,7 +30,7 @@ def main() -> None:
             if band == "LOW":
                 continue
             cursor.execute(
-                '''SELECT 1 FROM "NotificationEvent" WHERE "templateSlug"='safety.signal-alert'
+                '''SELECT 1 FROM platform."NotificationEvent" WHERE "templateSlug"='safety.signal-alert'
                    AND "createdAt" >= NOW() - INTERVAL '14 days' AND "variables"->>'drugName'=%s LIMIT 1''',
                 (drug_name,),
             )

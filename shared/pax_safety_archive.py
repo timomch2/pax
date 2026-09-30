@@ -17,9 +17,9 @@ def main() -> None:
         if not bucket:
             raise RuntimeError("AWS_BUCKET_NAME is required")
         prefix = os.environ.get("AWS_FOLDER_PREFIX", "").strip("/")
-        cursor.execute('SELECT row_to_json(r) FROM (SELECT * FROM "AdverseDrugReport" WHERE "createdAt" < NOW() - INTERVAL \'5 years\' AND "archivedAt" IS NULL ORDER BY "createdAt") r')
+        cursor.execute('SELECT row_to_json(r) FROM (SELECT * FROM safety."AdverseDrugReport" WHERE "createdAt" < NOW() - INTERVAL \'5 years\' AND "archivedAt" IS NULL ORDER BY "createdAt") r')
         reports = [row[0] for row in cursor.fetchall()]
-        cursor.execute('SELECT row_to_json(r) FROM (SELECT * FROM "ProductFeedback" WHERE "createdAt" < NOW() - INTERVAL \'5 years\' AND "archivedAt" IS NULL ORDER BY "createdAt") r')
+        cursor.execute('SELECT row_to_json(r) FROM (SELECT * FROM safety."ProductFeedback" WHERE "createdAt" < NOW() - INTERVAL \'5 years\' AND "archivedAt" IS NULL ORDER BY "createdAt") r')
         feedback = [row[0] for row in cursor.fetchall()]
         if not reports and not feedback:
             state["details"]["archiveCreated"] = False
@@ -33,9 +33,9 @@ def main() -> None:
         report_ids = [record["id"] for record in reports]
         feedback_ids = [record["id"] for record in feedback]
         if report_ids:
-            cursor.execute('UPDATE "AdverseDrugReport" SET "archivedAt"=NOW(), "archiveRef"=%s WHERE "id"=ANY(%s)', (key, report_ids))
+            cursor.execute('UPDATE safety."AdverseDrugReport" SET "archivedAt"=NOW(), "archiveRef"=%s WHERE "id"=ANY(%s)', (key, report_ids))
         if feedback_ids:
-            cursor.execute('UPDATE "ProductFeedback" SET "archivedAt"=NOW(), "archiveRef"=%s WHERE "id"=ANY(%s)', (key, feedback_ids))
+            cursor.execute('UPDATE safety."ProductFeedback" SET "archivedAt"=NOW(), "archiveRef"=%s WHERE "id"=ANY(%s)', (key, feedback_ids))
         state["processed"] = len(reports) + len(feedback)
         state["details"] = {"archiveCreated": True, "objectKey": key}
         connection.commit()

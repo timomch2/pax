@@ -19,5 +19,5 @@ export async function practiceTransaction<T>(work: (tx: Prisma.TransactionClient
 
 /** Serialize sensitive changes in one workspace without locking any other practitioner. */
 export async function lockPractice(tx: Prisma.TransactionClient, workspaceId: string): Promise<void> {
-  await tx.$queryRaw`SELECT id FROM "PracticeWorkspace" WHERE id = ${workspaceId} FOR UPDATE`;
+  await tx.$queryRaw`SELECT id FROM practice."PracticeWorkspace" WHERE id = ${workspaceId} FOR UPDATE`;
 }

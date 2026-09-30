@@ -352,3 +352,9 @@ verify their email, sign in and choose their first service in Accounts. New Goog
 account details and consent there. Service preferences do not assign roles or paid access. Validated
 service intake is separate; existing profiles, staff invitations and review gates remain in place.
 See [Account onboarding](docs/ACCOUNT-ONBOARDING.md) for routes, migration and verification boundaries.
+
+### Database domains
+
+PAX uses one PostgreSQL database with ten domain schemas and shared identity. See
+[Database schemas and migration recovery](docs/DATABASE-SCHEMAS.md) for ownership, Prisma/worker
+compatibility, verification, and the coordinated local migration procedure.

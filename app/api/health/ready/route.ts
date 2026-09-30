@@ -7,7 +7,7 @@ export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     const failedMigration = await prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(*)::bigint AS count FROM "_prisma_migrations"
+      SELECT COUNT(*)::bigint AS count FROM public."_prisma_migrations"
       WHERE "finished_at" IS NULL AND "rolled_back_at" IS NULL
     `;
     if (Number(failedMigration[0]?.count || 0) > 0) throw new Error('MIGRATION_INCOMPLETE');

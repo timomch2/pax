@@ -472,6 +472,13 @@ Payer status: `PENDING`, `PAID`, `OVERDUE`. Invoice status: `DRAFT`, `UNPAID`, `
 
 ## 8. Data Layer
 
+- Use one PostgreSQL database with domain schemas: `core`, `evidence`, `knowledge`, `innovation`,
+  `talent`, `practice`, `marketplace`, `investment`, `safety`, and `platform`. `public` retains only
+  migration history. See `docs/DATABASE-SCHEMAS.md` and `prisma/domain-schemas.json`. Every Prisma
+  model/enum needs an explicit owner; qualify raw SQL. Keep Prisma 6.7 multiSchema enabled.
+  Namespace moves require coordinated app/worker restarts and a tested backup; never use generated
+  drop/recreate SQL. Schemas do not replace application authorization or grant service permissions.
+
 - Prisma 6.7 against PostgreSQL. A single client instance is exported from `lib/db.ts` — **never instantiate
   a new client anywhere else**.
 - Verify the actual database target before writes. Local isolated databases exist; historical preview
