@@ -46,7 +46,7 @@ export function PatientsContent() {
           setPatients(data ?? []);
         }
       } catch (e: any) {
-        console.error('Failed to load patients:', e);
+        console.error('Failed to load clients:', e);
       } finally {
         setLoading(false);
       }
@@ -63,7 +63,7 @@ export function PatientsContent() {
         setShowDetail(true);
       }
     } catch {
-      toast.error('Failed to load patient details');
+      toast.error('Failed to load client details');
     }
   };
 
@@ -97,14 +97,14 @@ export function PatientsContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-2xl font-bold tracking-tight">Patient Management</h2>
-        <p className="text-sm text-muted-foreground">View and manage your patient records.</p>
+        <h2 className="font-display text-2xl font-bold tracking-tight">Client Management</h2>
+        <p className="text-sm text-muted-foreground">View and manage your client records.</p>
       </div>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search patients..."
+          placeholder="Search clients..."
           value={search}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
           className="pl-10"
@@ -115,7 +115,7 @@ export function PatientsContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-primary" />
-            Patients ({filtered?.length ?? 0})
+            Clients ({filtered?.length ?? 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -124,7 +124,7 @@ export function PatientsContent() {
               {[1, 2, 3].map((i: number) => <Skeleton key={i} className="h-12" />)}
             </div>
           ) : (filtered?.length ?? 0) === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No patients found.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">No clients found.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -164,7 +164,7 @@ export function PatientsContent() {
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedPatient?.patient?.name ?? 'Patient Details'}</DialogTitle>
+            <DialogTitle>{selectedPatient?.patient?.name ?? 'Client Details'}</DialogTitle>
           </DialogHeader>
           {selectedPatient && (
             <div className="space-y-6">

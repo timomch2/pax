@@ -91,7 +91,7 @@ export function CalendarContent() {
           setPatients(data ?? []);
         }
       } catch (e: any) {
-        console.error('Failed to fetch patients:', e);
+        console.error('Failed to fetch clients:', e);
       }
     };
     fetchPatients();
@@ -99,7 +99,7 @@ export function CalendarContent() {
 
   const handleCreate = async () => {
     if (!newApt.patientId || !newApt.dateTime) {
-      toast.error('Patient and date/time are required');
+      toast.error('Client and date/time are required');
       return;
     }
     try {
@@ -179,13 +179,13 @@ export function CalendarContent() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Patient</Label>
+                <Label>Client</Label>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                   value={newApt.patientId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewApt((p: any) => ({ ...(p ?? {}), patientId: e.target.value }))}
                 >
-                  <option value="">Select patient...</option>
+                  <option value="">Select client...</option>
                   {(patients ?? []).map((p: any) => (
                     <option key={p?.id} value={p?.id}>{p?.name} ({p?.email})</option>
                   ))}
@@ -278,7 +278,7 @@ export function CalendarContent() {
                           onClick={() => setEditingApt(apt)}
                           className={`mt-0.5 block w-full truncate rounded px-1 py-0.5 text-left text-[10px] font-medium ${typeColors[apt?.type ?? ''] ?? 'bg-gray-100 text-gray-700'}`}
                         >
-                          {apt?.patient?.name ?? 'Patient'}
+                          {apt?.patient?.name ?? 'Client'}
                         </button>
                       ))}
                       {(dayAppts?.length ?? 0) > 2 && (
@@ -359,7 +359,7 @@ export function CalendarContent() {
           {editingApt && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Patient:</span> <strong>{editingApt?.patient?.name ?? ''}</strong></div>
+                <div><span className="text-muted-foreground">Client:</span> <strong>{editingApt?.patient?.name ?? ''}</strong></div>
                 <div><span className="text-muted-foreground">Type:</span> <strong>{formatType(editingApt?.type ?? '')}</strong></div>
                 <div><span className="text-muted-foreground">Date:</span> <strong>{new Date(editingApt?.dateTime ?? '').toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}</strong></div>
                 <div><span className="text-muted-foreground">Fee:</span> <strong>KSh {(editingApt?.fee ?? 0).toLocaleString()}</strong></div>

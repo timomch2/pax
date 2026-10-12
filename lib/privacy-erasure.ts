@@ -30,7 +30,7 @@ export async function executeErasureRequest(requestId: string, actorId: string) 
 
     await tx.practitionerProfile.updateMany({
       where: { userId: user.id },
-      data: { medicalRegNumber: `ERASED-${identity.token}`, specialty: 'Withheld', hospital: null, bio: null, affiliations: null },
+      data: { medicalRegNumber: `ERASED-${identity.token}`, specialty: 'Withheld', hospital: null, bio: null, affiliations: null, directoryEnabled: false, practiceAddress: null, practiceTown: null, practiceCounty: null, latitude: null, longitude: null, specialtyOther: null },
     });
     await tx.marketplaceVendor.updateMany({
       where: { userId: user.id },

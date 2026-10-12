@@ -22,6 +22,7 @@ const navItems = [
   { href: '/admin/epidemiology', label: 'Epidemiology', icon: Activity },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/admin/facilities', label: 'Health facilities', icon: Activity },
+  { href: '/admin/specialties', label: 'Specialty suggestions', icon: ShieldCheck },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

@@ -160,6 +160,7 @@ export function LandingPage() {
           </Link>
           <ul className="hidden md:flex items-center gap-8 list-none">
             <li><Link href="/about" className="text-[13px] text-gray-600 no-underline tracking-wide hover:text-[#1F7A74] transition-colors">About</Link></li>
+            <li><Link href="/find-a-doctor" className="text-[13px] text-primary no-underline tracking-wide">Find a practitioner</Link></li>
             <li><a href="#why" className="text-[13px] text-gray-600 no-underline tracking-wide hover:text-[#1F7A74] transition-colors">Why PAX</a></li>
             <li><a href="#what-is-pax" className="text-[13px] text-gray-600 no-underline tracking-wide hover:text-[#1F7A74] transition-colors">What is PAX</a></li>
             <li><a href="#who" className="text-[13px] text-gray-600 no-underline tracking-wide hover:text-[#1F7A74] transition-colors">Who It&apos;s For</a></li>
@@ -201,6 +202,7 @@ export function LandingPage() {
           <div className="md:hidden border-t border-black/5 bg-[#FAF8F5] px-6 py-5 shadow-lg">
             <div className="flex flex-col gap-4">
               <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-700">About</Link>
+              <Link href="/find-a-doctor" onClick={() => setMobileMenuOpen(false)} className="text-sm text-primary">Find a practitioner</Link>
               <a href="#why" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-700">Why PAX</a>
               <a href="#what-is-pax" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-700">What is PAX</a>
               <a href="#who" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-700">Who It&apos;s For</a>
@@ -253,6 +255,7 @@ export function LandingPage() {
               ecosystem — turning ideas into scalable, life-saving solutions.
             </p>
             <div className="flex flex-wrap items-center gap-4 mb-14">
+              <Link href="/find-a-doctor" className="inline-flex items-center rounded-full border border-white/45 px-6 py-3.5 text-[15px] font-semibold text-white no-underline transition-colors hover:bg-white/10">Find a practitioner &amp; book</Link>
               <a
                 href="/register"
                 className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#FBBF24] rounded-full text-[15px] font-bold text-[#12403C] no-underline shadow-[0_10px_30px_rgba(251,191,36,0.35)] hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(251,191,36,0.45)] transition-all cursor-pointer"

@@ -6,6 +6,7 @@ import manifest from '../prisma/domain-schemas.json';
 
 const schema = readFileSync('prisma/schema.prisma', 'utf8');
 const migration = readFileSync('prisma/migrations/20260930090000_domain_schemas/migration.sql', 'utf8');
+const discoveryMigration = readFileSync('prisma/migrations/20261007090000_practitioner_discovery/migration.sql', 'utf8');
 
 test('every model and enum has one domain owner and a data-preserving migration', () => {
   const blocks = [...schema.matchAll(/(model|enum) (\w+) \{([\s\S]*?)\n\}/g)];
@@ -14,7 +15,9 @@ test('every model and enum has one domain owner and a data-preserving migration'
     const owners: Record<string, string> = kind === 'model' ? manifest.models : manifest.enums;
     assert.ok(owners[name], `Unassigned ${name}`);
     assert.ok(body.includes(`@@schema("${owners[name]}")`), name);
-    assert.ok(migration.includes(`ALTER ${kind === 'model' ? 'TABLE' : 'TYPE'} "public"."${name}" SET SCHEMA "${owners[name]}";`), name);
+    const moved = migration.includes(`ALTER ${kind === 'model' ? 'TABLE' : 'TYPE'} "public"."${name}" SET SCHEMA "${owners[name]}";`);
+    const added = kind === 'model' && discoveryMigration.includes(`CREATE TABLE "${owners[name]}"."${name}"`);
+    assert.ok(moved || added, name);
   }
   assert.doesNotMatch(migration, /\b(DROP|DELETE|TRUNCATE|CREATE TABLE)\b/i);
   assert.match(migration, /BEGIN;/);

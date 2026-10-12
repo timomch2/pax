@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PracticeForm, practiceFetch, practiceSend } from '@/components/hub/practice-form';
 import { moneyToMinor, formatPracticeMoney } from '@/lib/practice-money';
 import type { PracticeAction } from '@/lib/practice-policy';
+import { PracticeInquiries } from '@/components/hub/practice-inquiries';
 const yesNo = [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }];
 const displayTime = (time: string) => new Date(time).toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' });
 const today = () => new Date(Date.now() + 10800000).toISOString().slice(0, 10);
@@ -40,19 +41,20 @@ export function PracticeBookings({ workspaceId, capabilities }: { workspaceId: s
   if (error) return <p role="alert">{error.message}</p>;
   if (!data) return <p>Loading booking requests…</p>;
   return <div className="space-y-6">
+    <PracticeInquiries key={workspaceId} workspaceId={workspaceId} canManage={canManage} />
     <Card><CardHeader><CardTitle>Booking requests</CardTitle></CardHeader><CardContent className="space-y-4">
-      <p>Public link: <a className="underline" href={`/practice/book/${data.workspace.bookingSlug}`} target="_blank" rel="noreferrer">Open patient booking page</a> · {data.workspace.bookingEnabled ? 'Enabled' : 'Paused'}</p>
+      <p>Public link: <a className="underline" href={`/practice/book/${data.workspace.bookingSlug}`} target="_blank" rel="noreferrer">Open client booking page</a> · {data.workspace.bookingEnabled ? 'Enabled' : 'Paused'}</p>
       {!data.requests.length && <p>No requests awaiting review.</p>}
       {data.requests.map((r: any) => <div key={r.id} className="rounded-md bg-muted/40 p-4"><strong>{r.name}</strong><p>{displayTime(r.startsAt)} · {r.status.toLowerCase()}</p><p><span suppressHydrationWarning>{r.email}</span> · <span suppressHydrationWarning>{r.phone}</span></p>{r.proposedStartsAt && <p>Proposed: {displayTime(r.proposedStartsAt)}</p>}{canManage && <Button variant="outline" onClick={() => { setSelected(r); setMatches([]); }}>Review request</Button>}</div>)}
       {data.nextCursor && <Button variant="outline" onClick={() => setCursor(data.nextCursor)}>More requests</Button>}{cursor && <Button variant="outline" onClick={() => setCursor('')}>First page</Button>}
-      {selected && canManage && <div className="space-y-4"><h3 className="font-semibold">Review {selected.name}</h3><p>Patient matches are suggestions. Choose an existing patient only after checking their identity, or explain why this is a different person.</p><Label htmlFor="alternative-date">Alternative date</Label><Input id="alternative-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /><PracticeForm key={`${selected.id}:${matches.map((m) => m.id).join(',')}`} fields={[
+      {selected && canManage && <div className="space-y-4"><h3 className="font-semibold">Review {selected.name}</h3><p>Client matches are suggestions. Choose an existing client only after checking their identity, or explain why this is a different person.</p><Label htmlFor="alternative-date">Alternative date</Label><Input id="alternative-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /><PracticeForm key={`${selected.id}:${matches.map((m) => m.id).join(',')}`} fields={[
         { name: 'action', label: 'Decision', required: true, options: [{ value: 'APPROVE', label: 'Approve requested time' }, { value: 'DECLINE', label: 'Decline' }, { value: 'PROPOSE', label: 'Propose another time' }] },
         { name: 'slot', label: 'Alternative available time (if proposing)', options: (slots?.slots ?? []).map((s: any) => ({ value: `${s.availabilityId}|${s.startsAt}`, label: `${displayTime(s.startsAt)} · ${s.location}` })) },
-        { name: 'patientId', label: 'Matching existing patient', options: matches.map((p) => ({ value: p.id, label: `${p.name} · ${p.patientCode}` })) },
-        { name: 'distinctPatientReason', label: 'Why is this a different patient?', type: 'textarea' },
+        { name: 'patientId', label: 'Matching existing client', options: matches.map((p) => ({ value: p.id, label: `${p.name} · ${p.patientCode}` })) },
+        { name: 'distinctPatientReason', label: 'Why is this a different client?', type: 'textarea' },
       ]} submitLabel="Save decision" onSubmit={async (v) => {
         const [availabilityId, startsAt] = v.slot.split('|'); const response = await practiceSend(`${base}/bookings`, { id: selected.id, version: selected.version, action: v.action, patientId: v.patientId || null, ...(v.distinctPatientReason ? { distinctPatientReason: v.distinctPatientReason } : {}), ...(v.action === 'PROPOSE' ? { availabilityId, startsAt } : {}) }, 'PATCH');
-        if (response.requiresPatientReview) { setMatches(response.matches); toast.info('Review possible matching patients below'); } else { setSelected(null); setMatches([]); await mutate(); toast.success('Request updated'); }
+        if (response.requiresPatientReview) { setMatches(response.matches); toast.info('Review possible matching clients below'); } else { setSelected(null); setMatches([]); await mutate(); toast.success('Request updated'); }
       }} /></div>}
     </CardContent></Card>
     {owner && <><Card><CardHeader><CardTitle>Booking and reminders</CardTitle></CardHeader><CardContent><PracticeForm fields={[

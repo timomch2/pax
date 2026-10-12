@@ -8,7 +8,7 @@ export function formatKsh(amount: number): string {
 
 // ── Payer types ──
 export const PAYER_TYPE_LABELS: Record<string, string> = {
-  PATIENT: 'Patient (self-pay)',
+  PATIENT: 'Client (self-pay)',
   INSURER: 'Private insurer',
   EMPLOYER: 'Employer / corporate',
   SHA_NHIF: 'SHA / NHIF',

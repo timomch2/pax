@@ -1,5 +1,7 @@
 {
   "models": {
+    "PracticeSpecialty": "practice",
+    "PracticeAppointmentInquiry": "practice",
     "User": "core",
     "Account": "core",
     "Session": "core",

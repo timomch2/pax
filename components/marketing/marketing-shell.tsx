@@ -12,6 +12,7 @@ import { ModuleNavStrip } from '@/components/marketing/module-nav-strip';
 
 const NAV_LINKS = [
   { href: '/about', label: 'About' },
+  { href: '/find-a-doctor', label: 'Find a practitioner' },
   { href: '/#what-is-pax', label: 'What is PAX' },
   { href: '/#platform', label: 'Platform' },
   { href: '/safety', label: 'Pharmacovigilance' },

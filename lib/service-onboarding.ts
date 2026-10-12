@@ -26,6 +26,7 @@ export const serviceSetupRequestSchema = z
   })
   .strict();
 const practitionerSchema = practiceProfileSchema
+  .omit({ specialtyId: true, specialtyGroupId: true, specialtyOther: true, directoryEnabled: true, practiceAddress: true, practiceTown: true, practiceCounty: true, latitude: true, longitude: true })
   .extend({ medicalRegNumber: z.string().trim().min(1).max(120) })
   .strict();
 

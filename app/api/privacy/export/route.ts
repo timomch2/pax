@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     include: {
       services: { include: { events: { orderBy: { createdAt: 'asc' } } } },
       practitionerProfile: true,
+      practiceWorkspace: { include: { appointmentInquiries: true } },
       consentRecords: true,
       notifications: true,
       innovations: true,

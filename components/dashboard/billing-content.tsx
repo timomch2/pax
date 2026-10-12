@@ -143,7 +143,7 @@ export function BillingContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead className="hidden sm:table-cell">Type</TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead>Amount</TableHead>

@@ -32,7 +32,8 @@ export function PracticeShell({ children }: { children: React.ReactNode }) {
     : defaultNavItems.slice(0, 1);
   const query = new URLSearchParams(searchParams.toString());
   if (workspace) query.set('workspace', workspace.id);
-  navItems.push(...defaultNavItems.slice(1).map((item) => ({
+  // Active workspaces use the consolidated ledger; legacy finance remains available to unmigrated accounts.
+  navItems.push(...defaultNavItems.slice(workspace ? 2 : 1).map((item) => ({
     ...item,
     href: `${item.href}${query.size ? `?${query}` : ''}`,
     // Keep legacy finance subpages highlighted without matching other workspace sections.

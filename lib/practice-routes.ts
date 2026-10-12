@@ -1,10 +1,10 @@
 /** Canonical Practice URLs; old dashboard URLs remain compatible through redirects. */
 export const PRACTICE_SECTIONS = {
   facilities: { path: '/practice', label: 'Facilities', capability: null },
-  patients: { path: '/practice/patients', label: 'Patients', capability: 'patient.read' },
+  patients: { path: '/practice/patients', label: 'Clients', capability: 'patient.read' },
   calendar: { path: '/practice/calendar', label: 'Calendar', capability: 'calendar.read' },
   bookings: { path: '/practice/bookings', label: 'Booking requests', capability: 'calendar.read' },
-  finance: { path: '/practice/billing', label: 'Billing', capability: 'billing.read' },
+  finance: { path: '/practice/billing', label: 'Practice Finance', capability: 'billing.read' },
   accounts: { path: '/practice/accounts', label: 'Accounts', capability: 'billing.read' },
   reports: { path: '/practice/reports', label: 'Reports', capability: 'report.read' },
   team: { path: '/practice/team', label: 'Team', capability: 'team.manage' },

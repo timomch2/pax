@@ -645,6 +645,7 @@ model PracticeWorkspace {
   reconciliations          PracticeReconciliation[]
   availability             PracticeAvailability[]
   bookingRequests          PracticeBookingRequest[]
+  appointmentInquiries     PracticeAppointmentInquiry[]
 
   @@schema("practice")
 }
@@ -905,9 +906,57 @@ model PractitionerProfile {
   bio              String?
   clinicId         String?
   affiliations     String?  @db.Text
+  specialtyId      String?
+  specialtyGroupId String?
+  specialtyOther   String?
+  directoryEnabled Boolean  @default(false)
+  practiceAddress  String?
+  practiceTown     String?
+  practiceCounty   String?
+  latitude         Float?
+  longitude        Float?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  @@schema("practice")
+}
+
+model PracticeSpecialty {
+  id           String   @id @default(cuid())
+  name         String
+  normalizedName String @unique
+  parentId     String?
+  parent       PracticeSpecialty? @relation("PracticeSpecialtyTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children     PracticeSpecialty[] @relation("PracticeSpecialtyTree")
+  status       String   @default("PENDING")
+  proposedById String?
+  reviewedById String?
+  reviewNotes  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, parentId])
+  @@schema("practice")
+}
+
+model PracticeAppointmentInquiry {
+  id            String @id @default(cuid())
+  workspaceId   String
+  workspace     PracticeWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  name          String
+  phone         String
+  email         String?
+  clientCode    String?
+  preferredDate String?
+  reason        String? @db.Text
+  status        String @default("PENDING")
+  reviewReason  String?
+  eventId       String? @unique
+  version       Int @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([workspaceId, status, createdAt])
   @@schema("practice")
 }
 

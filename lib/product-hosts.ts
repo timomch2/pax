@@ -64,6 +64,16 @@ export function sessionCookieName() {
 }
 /** Reverse proxies may use HTTP internally; compare browser origins against configured HTTPS hosts. */
 export function isSameProductOrigin(request: Request) {
+  // Next's development server may expose localhost internally when opened through 127.0.0.1.
+  // Accept only the exact incoming loopback host/port; production origin checks stay unchanged.
+  if (!productRoutingEnabled() && process.env.NODE_ENV === 'development') {
+    try {
+      const actual = new URL(request.headers.get('origin') || '');
+      const internal = new URL(request.url);
+      const loopback = ['localhost', '127.0.0.1', '[::1]'];
+      if (loopback.includes(actual.hostname) && loopback.includes(internal.hostname) && actual.protocol === internal.protocol && actual.host === request.headers.get('host')) return true;
+    } catch { return false; }
+  }
   const expected = productRoutingEnabled()
     ? Object.values(productOrigins()).find(
         (origin) => new URL(origin).host === request.headers.get("host"),

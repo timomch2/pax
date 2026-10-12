@@ -9,6 +9,10 @@ export const communityProfileSchema = z.object({
 export const practiceProfileSchema = z.object({
   specialty: text(200).min(1), hospital: text(200), bio: text(5000), affiliations: text(2000),
   consultationRate: z.coerce.number().int().min(0).max(20000000),
+  specialtyId: text(100).nullable().optional(), specialtyGroupId: text(100).nullable().optional(), specialtyOther: text(200).nullable().optional(),
+  directoryEnabled: z.boolean().optional(),
+  practiceAddress: text(300).optional(), practiceTown: text(120).optional(), practiceCounty: text(120).optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(), longitude: z.number().min(-180).max(180).nullable().optional(),
 }).strict();
 export const vendorContactSchema = z.object({
   contactPerson: text(200).min(1), contactEmail: z.string().trim().email().max(254), contactPhone: text(60).min(1),

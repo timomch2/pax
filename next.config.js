@@ -44,7 +44,9 @@ const nextConfig = {
         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self)' },
       ],
-    }];
+    }, ...['/find-a-doctor', '/practice/profile'].map(source => ({ source, headers: [
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=(self)' },
+    ] }))];
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

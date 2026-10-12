@@ -27,7 +27,7 @@ export function PracticeCalendar({ workspaceId, capabilities }: { workspaceId: s
   const fields: PracticeField[] = [
     { name: 'kind', label: 'Event type', required: true, value: editing?.kind ?? 'APPOINTMENT', options: Object.entries(PRACTICE_EVENT_KIND_LABELS).map(([value, label]) => ({ value, label })) },
     { name: 'title', label: 'Title', required: true, value: editing?.title },
-    { name: 'patientId', label: 'Patient (patient appointments only)', value: editing?.patientId ?? '', options: [...(patients?.patients ?? []), ...(editing?.patient && !patients?.patients.some((p: any) => p.id === editing.patientId) ? [editing.patient] : [])].map((p: any) => ({ value: p.id, label: `${p.name} · ${p.patientRef ?? p.patientCode ?? ''}` })) },
+    { name: 'patientId', label: 'Client (client appointments only)', value: editing?.patientId ?? '', options: [...(patients?.patients ?? []), ...(editing?.patient && !patients?.patients.some((p: any) => p.id === editing.patientId) ? [editing.patient] : [])].map((p: any) => ({ value: p.id, label: `${p.name} · ${p.patientRef ?? p.patientCode ?? ''}` })) },
     { name: 'facilityId', label: 'Facility (optional)', value: editing?.facilityId ?? '', options: (consulting?.relationships ?? []).map((row: any) => ({ value: row.facility.id, label: row.facility.officialName })) },
     { name: 'startsAt', label: 'Starts (Nairobi time)', type: 'datetime-local', required: true, value: editing?.startsAt ? localInput(editing.startsAt) : '' },
     { name: 'endsAt', label: 'Ends (Nairobi time)', type: 'datetime-local', required: true, value: editing?.endsAt ? localInput(editing.endsAt) : '' },
@@ -53,7 +53,7 @@ export function PracticeCalendar({ workspaceId, capabilities }: { workspaceId: s
       </div>)}
     </CardContent></Card>
     {editing && <Card><CardHeader><CardTitle>{editing.id ? 'Edit event' : 'New event'}</CardTitle></CardHeader><CardContent className="space-y-4">
-      <label className="block text-sm">Find a patient to populate the patient selector<input className="mt-2 h-10 w-full rounded-md border bg-background px-3" value={patientSearch} onChange={(event) => setPatientSearch(event.target.value)} placeholder="Search patient name or reference" /></label>
+      <label className="block text-sm">Find a client to populate the client selector<input className="mt-2 h-10 w-full rounded-md border bg-background px-3" value={patientSearch} onChange={(event) => setPatientSearch(event.target.value)} placeholder="Search client name or reference" /></label>
       <PracticeForm key={editing.id ?? 'new'} fields={fields} submitLabel="Save event" onSubmit={async (values) => {
         if (values.frequency && !values.until) throw new Error('Choose an end date for the recurring series');
         const event = { kind: values.kind, title: values.title, patientId: values.patientId || null, facilityId: values.facilityId || null, startsAt: atNairobi(values.startsAt), endsAt: atNairobi(values.endsAt), location: values.location || null, meetingUrl: values.meetingUrl || null, notes: values.notes || null, billable: values.billable === 'yes', serviceCode: values.serviceCode || null, feeMinor: values.fee ? moneyToMinor(values.fee) : null, overrideReason: values.overrideReason || null, recurrence: !editing.id && values.frequency ? { frequency: values.frequency, until: `${values.until}T23:59:59+03:00` } : null };

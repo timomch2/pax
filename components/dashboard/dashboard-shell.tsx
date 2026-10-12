@@ -35,7 +35,7 @@ const navItems = [
   { href: '/practice', label: 'Practice Workspace', icon: Wallet, permission: 'practice.read' },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.read' },
   { href: '/practice/calendar', label: 'Calendar', icon: Calendar, permission: 'hub.appointment.read' },
-  { href: '/practice/patients', label: 'Patients', icon: Users, permission: 'hub.patient.read' },
+  { href: '/practice/patients', label: 'Clients', icon: Users, permission: 'hub.patient.read' },
   { href: '/dashboard/members', label: 'Members', icon: Users2, permission: 'member.read' },
   { href: '/dashboard/talent-search', label: 'Talent Search', icon: Briefcase, permission: 'talent.job.read' },
   { href: '/dashboard/challenges', label: 'Challenge Briefs', icon: Megaphone, permission: 'community.read' },

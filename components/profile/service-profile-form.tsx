@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PILLAR_LABELS, VENDOR_STATUS_LABELS, BUYER_ENTITY_LABELS } from '@/lib/marketplace';
 import type { EditableServiceProfile } from '@/lib/service-profile-validation';
+import { PracticeProfileEditor } from '@/components/profile/practice-profile-editor';
 
 const definitions: Record<EditableServiceProfile, { title: string; fields: PracticeField[] }> = {
   practice: { title: 'Clinical profile', fields: [
@@ -33,7 +34,7 @@ const definitions: Record<EditableServiceProfile, { title: string; fields: Pract
 /** Reuse each service's stored profile without editing another service or the shared login identity. */
 export function ServiceProfileForm({ service }: { service: EditableServiceProfile }) {
   const url = `/api/service-profile/${service}`;
-  const { data, error, mutate } = useSWR<Record<string, string | number | null> | null>(url, practiceFetch);
+  const { data, error, mutate } = useSWR<Record<string, string | number | boolean | null> | null>(url, practiceFetch);
   const { data: session } = useSession();
   const { data: access } = useSWR<{ permissions: string[] }>('/api/auth/capabilities', practiceFetch);
   const canEdit = Boolean(access?.permissions.includes('profile.update') &&
@@ -50,10 +51,10 @@ export function ServiceProfileForm({ service }: { service: EditableServiceProfil
     {service === 'practice' && <dl className="grid gap-3 sm:grid-cols-2"><div><dt className="text-sm text-muted-foreground">Medical registration</dt><dd>{data.medicalRegNumber || 'Not recorded'}</dd></div><div><dt className="text-sm text-muted-foreground">Clinic ID</dt><dd>{data.clinicId || 'Not assigned'}</dd></div></dl>}
     {service === 'vendor' && <div><h3 className="font-semibold">{data.tradingName || data.corporateName}</h3><p>{PILLAR_LABELS[String(data.primaryPillar)]} · {VENDOR_STATUS_LABELS[String(data.status)]}</p><p className="text-sm text-muted-foreground">Registration: {data.registrationNumber} · {data.country}</p><Link href="/marketplace/vendor" className="text-sm text-primary underline">Open vendor dashboard</Link></div>}
     {service === 'buyer' && <div><h3 className="font-semibold">{data.institutionName}</h3><p>{BUYER_ENTITY_LABELS[String(data.entityType)]} · {data.jurisdiction}</p></div>}
-    <PracticeForm disabled={!canEdit} key={JSON.stringify(data)} fields={definition.fields.map(field => ({ ...field, value: String(data[field.name] ?? '') }))} submitLabel="Save profile" onSubmit={async values => {
+    {service === 'practice' ? <PracticeProfileEditor key={JSON.stringify(data)} data={data} disabled={!canEdit} onSaved={async () => { await mutate(); }} /> : <PracticeForm disabled={!canEdit} key={JSON.stringify(data)} fields={definition.fields.map(field => ({ ...field, value: String(data[field.name] ?? '') }))} submitLabel="Save profile" onSubmit={async values => {
       const saved = await practiceSend(url, values, 'PATCH');
       await mutate(saved, false);
       toast.success('Profile saved');
-    }} />
+    }} />}
   </CardContent></Card>;
 }
